@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="en" data-theme="mint-chocolate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f9e7c7">
+  <meta name="description" content="A cozy corner of the internet for MYP students to feel better, stay curious, and find their orbit.">
+  <title>Little Orbit</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Emilys+Candy&family=Grandstander:wght@400;500;600;700&family=Henny+Penny&family=Pirata+One&family=Ribeye&family=Share+Tech+Mono&family=Shrikhand&family=Sniglet:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="wordmark" href="#home" aria-label="Little Orbit home">
+      <img src="assets/little-orbit-mint.svg" data-theme-logo data-mint-logo="assets/little-orbit-mint.svg" data-dark-logo="assets/little-orbit-dark.svg" alt="Little Orbit">
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a href="#orbit">Our Orbit</a>
+      <a href="#features">Explore Features</a>
+    </nav>˝
+    <div class="header-actions">
+      <button class="theme-toggle" id="theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Switch to Dark Academia theme">
+        <span class="theme-toggle__track" aria-hidden="true"><span class="theme-toggle__thumb"></span></span>
+        <span class="theme-toggle__label"><b>THEME:</b> Mint-Chocolate</span>
+      </button>
+      <button class="header-auth header-auth--login" type="button" data-auth-action="Log in">Log in</button>
+      <button class="header-auth header-auth--signup" type="button" data-auth-action="Sign up">Sign up</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="home" aria-labelledby="hero-title">
+      <span class="sticker sticker-star sticker-star--one" aria-hidden="true">✦</span>
+      <span class="sticker sticker-star sticker-star--two" aria-hidden="true">✳</span>
+      <span class="sticker sticker-planet sticker-planet--one" aria-hidden="true">🪐</span>
+      <span class="sticker sticker-sparkle sticker-sparkle--one" aria-hidden="true">✧</span>
+      <span class="sticker sticker-sparkle sticker-sparkle--two" aria-hidden="true">✦</span>
+      <span class="hero__orbit-line hero__orbit-line--one" aria-hidden="true"></span>
+      <span class="hero__orbit-line hero__orbit-line--two" aria-hidden="true"></span>
+
+      <div class="hero__content">
+        <p class="eyebrow hero__eyebrow"><span aria-hidden="true">☾</span> your space to feel good</p>
+        <h1 id="hero-title">LITTLE <span>ORBIT</span></h1>
+        <div class="logo-orbit">
+          <img src="assets/little-orbit-dark.svg" alt="Little Orbit">
+        </div>
+        <p class="hero__slogan">For the students, by the students, of the students</p>
+        <p class="hero__intro">A cozy corner of the universe for big feelings, busy brains, and everything in between.</p>
+        <div class="hero__actions">
+          <button class="button button--signup" type="button" data-auth-action="Sign up">
+            Sign up
+            <span class="button__arrow" aria-hidden="true"><img src="assets/right-to-bracket.svg" alt=""></span>
+          </button>
+          <button class="button button--login" type="button" data-auth-action="Log in">Log in</button>
+        </div>
+        <p class="hero__note"><span aria-hidden="true">✦</span> made for IB teens, just like you!</p>
+      </div>
+    </section>
+
+    <section class="audience" id="orbit" aria-labelledby="orbit-title">
+      <div class="section-wrap">
+        <div class="orbit-divider" aria-hidden="true"><span>✦</span></div>
+        <div class="section-heading reveal">
+          <p class="eyebrow"><span aria-hidden="true">✦</span> there’s room for you here</p>
+          <h2 id="orbit-title">Who belongs in <span>our Orbit?</span></h2>
+          <p><b>Short answer? -</b> <b><em>YOU!</em></b> Built specifically for MYP 1-5 students.
+            Whether you're cruising or tackling IB deadlines, this is your peaceful space.</p>
+        </div>
+        <div class="audience-grid">
+          <article class="audience-card audience-card--stressed reveal">
+            <span class="audience-card__icon" aria-hidden="true">
+              <img src="assets/orbit-academic.svg" alt="">
+            </span>
+            <span class="card-tag">for the “one more deadline?!” days</span>
+            <h3>The Stressed Academic</h3>
+            <p>When your planner is full and your brain has 27 tabs open. Find a calmer way to tackle the MYP mountain, one tiny step at a time.</p>
+            <span class="audience-card__doodle audience-card__doodle--academic" aria-hidden="true"></span>
+          </article>
+          <article class="audience-card audience-card--creative reveal">
+            <span class="audience-card__icon" aria-hidden="true">
+              <img src="assets/orbit-creative.svg" alt="">
+            </span>
+            <span class="card-tag">for the ideas-at-2am club</span>
+            <h3>The Creative Thinker</h3>
+            <p>Your mind is a whole universe of 'what-ifs'. Make room to write, dream, and turn your wonderfully random ideas into something real.</p>
+            <span class="audience-card__doodle audience-card__doodle--creative" aria-hidden="true"></span>
+          </article>
+          <article class="audience-card audience-card--mindful reveal">
+            <span class="audience-card__icon" aria-hidden="true">
+              <img src="assets/orbit-mindful.svg" alt="">
+            </span>
+            <span class="card-tag">for the “let me take a breath” moments</span>
+            <h3>The Mindful Soul</h3>
+            <p>Growing at your own pace still counts as growing. Take a little pause, check in with yourself, and make space for what you need.</p>
+            <span class="audience-card__doodle audience-card__doodle--mindful" aria-hidden="true"></span>
+          </article>
+        </div>
+        <p class="audience__footnote reveal"><span aria-hidden="true">♡</span> No perfect grades, perfect habits, or perfect vibes required.</p>
+      </div>
+    </section>
+
+    <section class="features" id="features" aria-labelledby="features-title">
+      <div class="section-wrap">
+        <div class="section-heading section-heading--features reveal">
+          <p class="eyebrow"><span aria-hidden="true">✦</span> THE FEATURES</p>
+          <h2 id="features-title">Meet your new <span>favourite orbit.</span></h2>
+          <p>Flip a card to peek inside.</p>
+        </div>
+        <div class="feature-grid">
+          <button class="feature-card feature-card--journal reveal" type="button" aria-pressed="false">
+            <span class="feature-card__inner">
+              <span class="feature-face feature-face--front">
+                <span class="feature-card__topline"><span class="feature-number">01 / REFLECT</span><span class="feature-icon" aria-hidden="true"><img src="assets/pen.svg" alt=""></span></span>
+                <span class="feature-card__title">3D Journal</span>
+                <span class="feature-card__copy">A soft landing for all the thoughts doing cartwheels in your head.</span>
+                <span class="feature-card__prompt">Tap to explore</span>
+              </span>
+              <span class="feature-face feature-face--back">
+                <span class="feature-back__sticker feature-back__sticker--journal" aria-hidden="true"></span>
+                <span class="feature-back__label">your thoughts, your space</span>
+                <span class="feature-back__copy">Flip through playful prompts, name what you’re feeling, or just let the words out. No grades. No judgement. Just you.</span>
+                <span class="feature-card__prompt">Flip back</span>
+              </span>
+            </span>
+          </button>
+          <button class="feature-card feature-card--tracker reveal" type="button" aria-pressed="false">
+            <span class="feature-card__inner">
+              <span class="feature-face feature-face--front">
+                <span class="feature-card__topline"><span class="feature-number">02 / GET ORGANISED</span><span class="feature-icon" aria-hidden="true"><img src="assets/calendar-week.svg" alt=""></span></span>
+                <span class="feature-card__title">Academic Tracker</span>
+                <span class="feature-card__copy">Make deadlines feel less like meteors and more like manageable mini-missions.</span>
+                <span class="feature-card__prompt">Tap to explore</span>
+              </span>
+              <span class="feature-face feature-face--back">
+                <span class="feature-back__sticker feature-back__sticker--tracker" aria-hidden="true"></span>
+                <span class="feature-back__label">one thing at a time</span>
+                <span class="feature-back__copy">See what’s coming, organise your school deadlines perfectly and tackle them cleanly.</span>
+                <span class="feature-card__prompt">Flip back</span>
+              </span>
+            </span>
+          </button>
+          <button class="feature-card feature-card--garden reveal" type="button" aria-pressed="false">
+            <span class="feature-card__inner">
+              <span class="feature-face feature-face--front">
+                <span class="feature-card__topline"><span class="feature-number">03 / GROW GENTLY</span><span class="feature-icon" aria-hidden="true"><img src="assets/habit-garden-florist.svg" alt=""></span></span>
+                <span class="feature-card__title">Habit Garden</span>
+                <span class="feature-card__copy">Tiny habits, tiny sprouts. No streaks to break, just little ways to bloom.</span>
+                <span class="feature-card__prompt">Tap to explore</span>
+              </span>
+              <span class="feature-face feature-face--back">
+                <span class="feature-back__sticker feature-back__sticker--garden" aria-hidden="true"></span>
+                <span class="feature-back__label">progress over perfect</span>
+                <span class="feature-back__copy">Tick off a task on your daily checklist and watch your garden grow. Forgot a day? Your garden’s still here when you are.</span>
+                <span class="feature-card__prompt">Flip back</span>
+              </span>
+            </span>
+          </button>
+          <button class="feature-card feature-card--asmr reveal" type="button" aria-pressed="false">
+            <span class="feature-card__inner">
+              <span class="feature-face feature-face--front">
+                <span class="feature-card__topline"><span class="feature-number">04 / TAKE A PAUSE</span><span class="feature-icon" aria-hidden="true"><img src="assets/wand-magic-sparkles.svg" alt=""></span></span>
+                <span class="feature-card__title">ASMR Hub</span>
+                <span class="feature-card__copy">A little pocket of calm for your study breaks and brain resets.</span>
+                <span class="feature-card__prompt">Tap to explore</span>
+              </span>
+              <span class="feature-face feature-face--back">
+                <span class="feature-back__sticker feature-back__sticker--asmr" aria-hidden="true"></span>
+                <span class="feature-back__label">press pause on the universe</span>
+                <span class="feature-back__copy">Play with interactive shapes and sound sliders to instantly melt away your study stress!</span>
+                <span class="feature-card__prompt">Flip back</span>
+              </span>
+            </span>
+          </button>
+        </div>
+        <p class="features__note reveal"><span aria-hidden="true">✧</span> Built by students who get it. Here for students who are living it.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-mark" href="#home" aria-label="Little Orbit home">
+      <img src="assets/little-orbit-mint.svg" data-theme-logo data-mint-logo="assets/little-orbit-mint.svg" data-dark-logo="assets/little-orbit-dark.svg" alt="Little Orbit">
+    </a>
+    <p>For the students, by the students, of the students <span aria-hidden="true">♡</span></p>
+    <a class="back-to-top" href="#home">Back to the stars ↑</a>
+  </footer>
+  <div class="workspace-shell" id="workspace-shell" hidden>
+    <header class="workspace-header">
+      <a class="workspace-brand" href="#workspace-home" aria-label="Little Orbit workspace home">
+        <img src="assets/little-orbit-mint.svg" data-theme-logo data-mint-logo="assets/little-orbit-mint.svg" data-dark-logo="assets/little-orbit-dark-academia.svg" alt="Little Orbit">
+      </a>
+      <div class="workspace-header__right">
+        <div class="workspace-profile">
+          <button class="workspace-profile__trigger" id="workspace-profile-trigger" type="button" aria-expanded="false" aria-controls="workspace-profile-menu">
+            <img id="workspace-avatar" src="" alt="">
+            <span id="workspace-username"></span>
+            <img class="workspace-profile__chevron" src="assets/icon-chevron.svg" alt="" aria-hidden="true">
+          </button>
+          <div class="workspace-profile__menu" id="workspace-profile-menu" role="menu" hidden>
+            <button class="workspace-profile__settings" id="workspace-settings-trigger" type="button" role="menuitem">
+              <img src="assets/icon-settings.svg" alt="" aria-hidden="true">
+              <span>Settings</span>
+            </button>
+            <button class="workspace-profile__logout" id="workspace-logout" type="button" role="menuitem">
+              <img src="assets/icon-logout.svg" alt="" aria-hidden="true">
+              <span>Log out</span>
+            </button>
+          </div>
+        </div>
+        <nav class="workspace-nav" aria-label="Workspace navigation">
+          <a class="workspace-nav__item" href="#workspace-home" data-workspace-page="home" aria-current="page">
+            <img src="assets/icon-home.svg" alt="" aria-hidden="true">
+            <span>HOME</span>
+          </a>
+          <a class="workspace-nav__item" href="#workspace-journal" data-workspace-page="journal">
+            <img src="assets/icon-journal.svg" alt="" aria-hidden="true">
+            <span>MY JOURNAL</span>
+          </a>
+          <a class="workspace-nav__item" href="#workspace-wellness" data-workspace-page="wellness">
+            <img src="assets/icon-wellness.png" alt="" aria-hidden="true">
+            <span>WELLNESS PORTAL</span>
+          </a>
+          <a class="workspace-nav__item" href="#workspace-planner" data-workspace-page="planner">
+            <img src="assets/icon-planner.svg" alt="" aria-hidden="true">
+            <span>PLANNER</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="workspace-settings" id="workspace-settings" role="dialog" aria-modal="true" aria-labelledby="workspace-settings-title" hidden>
+      <div class="workspace-settings__surface">
+        <div class="settings-layout">
+          <aside class="settings-sidebar" id="settings-sidebar" aria-label="Settings sections">
+            <h1 id="workspace-settings-title">Settings</h1>
+            <nav class="settings-sidebar__nav" aria-label="Settings navigation">
+              <button class="settings-sidebar__item" type="button" data-settings-panel="account" aria-controls="account-panel" aria-selected="false"><img src="assets/settings-icon-account.svg" alt="" aria-hidden="true"><span>Account</span></button>
+              <button class="settings-sidebar__item is-active" type="button" data-settings-panel="customization" aria-controls="customization-panel" aria-selected="true"><img src="assets/settings-icon-customization.svg" alt="" aria-hidden="true"><span>Customization</span></button>
+            </nav>
+          </aside>
+          <div class="settings-content" id="settings-content">
+            <section class="settings-panel" id="account-panel" aria-labelledby="account-panel-title" hidden>
+              <h2 id="account-panel-title">Account</h2>
+              <p class="settings-panel__intro">Your Little Orbit profile and account details.</p>
+              <div class="account-profile-summary">
+                <img class="account-profile-summary__avatar" id="account-profile-avatar" src="" alt="">
+                <div class="account-profile-summary__details">
+                  <h3 id="account-profile-name">Your username</h3>
+                  <p id="account-profile-email">your email address</p>
+                  <dl class="account-profile-summary__facts">
+                    <div><dt><img src="assets/settings-icon-grade.svg" alt="" aria-hidden="true">Grade</dt><dd id="account-profile-grade">Not set</dd></div>
+                    <div><dt><img src="assets/settings-icon-subjects.svg" alt="" aria-hidden="true">Subjects</dt><dd id="account-profile-subjects">No subjects selected</dd></div>
+                  </dl>
+                  <label class="account-profile-picture-button">
+                    <span><img src="assets/settings-icon-picture.svg" alt="" aria-hidden="true">Edit profile picture</span>
+                    <input id="account-profile-picture-input" type="file" accept="image/*">
+                  </label>
+                  <p class="account-profile-picture-message" id="account-profile-picture-message" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+              <div class="account-status-card">
+                <div class="account-status-row">
+                  <div><strong><img src="assets/settings-icon-username.svg" alt="" aria-hidden="true">Edit username</strong><small>Current username: <span id="account-username-value">Not set</span></small></div>
+                  <button class="account-action-button" type="button" data-account-action="username">Edit</button>
+                </div>
+                <div class="account-status-row">
+                  <div><strong><img src="assets/settings-icon-password.svg" alt="" aria-hidden="true">Change password</strong><small>Current password: <span id="account-password-value">Not set</span></small></div>
+                  <button class="account-action-button" type="button" data-account-action="password">Change</button>
+                </div>
+                <div class="account-status-row">
+                  <div><strong><img src="assets/settings-icon-grade.svg" alt="" aria-hidden="true">Change grade</strong><small>Current grade: <span id="account-grade-value">Not set</span></small></div>
+                  <button class="account-action-button" type="button" data-account-action="grade">Change</button>
+                </div>
+                <div class="account-status-row">
+                  <div><strong><img src="assets/settings-icon-subjects.svg" alt="" aria-hidden="true">Change subjects</strong><small>Current subjects: <span id="account-subjects-value">No subjects selected</span></small></div>
+                  <button class="account-action-button" type="button" data-account-action="subjects">Change</button>
+                </div>
+                <div class="account-status-row account-status-row--danger">
+                  <div><strong><img src="assets/settings-icon-delete.svg" alt="" aria-hidden="true">Delete account</strong><small>This permanently removes your local profile and account data.</small></div>
+                  <button class="account-action-button account-action-button--danger" type="button" data-account-action="delete">Delete</button>
+                </div>
+              </div>
+              <div class="account-delete-confirmation" id="account-delete-confirmation" hidden>
+                <h3>Are you sure you want to delete your account?</h3>
+                <p>Your profile, subjects, and saved Little Orbit data will be removed from this browser. If you use the same email address again, you will need to create a new account.</p>
+                <div class="account-delete-confirmation__actions">
+                  <button class="account-action-button" id="account-delete-cancel" type="button">Keep my account</button>
+                  <button class="account-action-button account-action-button--danger" id="account-delete-confirm" type="button">Yes, delete account</button>
+                </div>
+              </div>
+            </section>
+            <section class="settings-panel" id="customization-panel" aria-labelledby="customization-panel-title">
+              <h2 id="customization-panel-title">Theme Customization:</h2>
+              <p>Choose your look and feel.</p>
+              <section class="workspace-settings__themes" aria-labelledby="workspace-settings-theme-title">
+                <div class="workspace-theme-options" role="group" aria-label="Choose a workspace theme">
+                  <button class="workspace-theme-option is-selected" type="button" data-settings-theme="mint-chocolate" aria-pressed="true"><span>Mint-Chocolate</span></button>
+                  <button class="workspace-theme-option" type="button" data-settings-theme="dark-academia" aria-pressed="false"><span>Dark Academia</span></button>
+                  <button class="workspace-theme-option" type="button" data-settings-theme="tulip-pastel" aria-pressed="false"><span>Tulip Pastel</span></button>
+                  <button class="workspace-theme-option" type="button" data-settings-theme="retro-fun" aria-pressed="false"><span>Retro Studio</span></button>
+                </div>
+                <section class="workspace-settings__typography" aria-labelledby="workspace-settings-typography-title">
+                  <h2 id="workspace-settings-typography-title">Typography - Fonts:</h2>
+                  <p>Choose the global font for each hierarchy level.</p>
+                  <div class="workspace-typography-options">
+                    <label class="workspace-typography-option" for="font-heading-select"><span>Headings</span><select id="font-heading-select" data-font-setting="heading"><option value="Shrikhand" selected>Shrikhand</option><option value="Henny Penny">Henny Penny</option><option value="Pirata One">Pirata One</option></select></label>
+                    <label class="workspace-typography-option" for="font-subheading-select"><span>Subheadings</span><select id="font-subheading-select" data-font-setting="subheading"><option value="Ribeye" selected>Ribeye</option><option value="Emilys Candy">Emilys Candy</option><option value="VT323">VT323</option></select></label>
+                    <label class="workspace-typography-option" for="font-body-select"><span>Body Text</span><select id="font-body-select" data-font-setting="body"><option value="Grandstander" selected>Grandstander</option><option value="Sniglet">Sniglet</option><option value="Share Tech Mono">Share Tech Mono</option></select></label>
+                  </div>
+                </section>
+              </section>
+            </section>
+          </div>
+        </div>
+        <button class="workspace-settings__close" id="workspace-settings-close" type="button" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18.3 5.71 17.29 4.7 12 9.99 6.71 4.7 5.7 5.71 10.99 11 5.7 16.29l1.01 1.01L12 12.01l5.29 5.29 1.01-1.01L13.01 11z"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <main class="workspace-main" id="workspace-main">
+      <section class="workspace-dashboard" id="workspace-home" aria-labelledby="workspace-title">
+        <div class="workspace-welcome">
+          <div class="workspace-welcome__image" role="img" aria-label="Welcome banner image placeholder">
+            <span class="visually-hidden">Blossom welcome banner</span>
+          </div>
+          <img
+            class="workspace-welcome__word"
+            src="assets/welcome-mintchoco.png"
+            alt="Welcome"
+            data-welcome-theme="mint-chocolate"
+            data-mint-welcome="assets/welcome-mintchoco.png"
+            data-dark-welcome="assets/welcome-dark-academia.png"
+            data-pastel-welcome="assets/welcome-pastel.png"
+            data-retro-welcome="assets/welcome-retro.png"
+          >
+          <h1 id="workspace-title"><span id="workspace-welcome-name"></span></h1>
+          <p class="workspace-welcome__quote">
+            <span class="workspace-welcome__quote-text"></span>
+            <span class="workspace-welcome__quote-author"></span>
+          </p>
+          <p class="workspace-mission-log">
+            <span class="workspace-mission-log__icon" aria-hidden="true"></span>
+            <span>TODAY'S COORDINATES:</span>
+            <time id="workspace-mission-date"></time>
+          </p>
+        </div>
+        <p class="workspace-status visually-hidden" id="workspace-status" role="status" aria-live="polite"></p>
+        <div class="workspace-panels">
+          <!-- C.1 layout blueprint: the planner dashboard card occupies Column 3, with the view switch beside its title, page navigation at the far edge, and one active workspace below. -->
+          <section class="planner-widget" aria-labelledby="planner-title">
+            <header class="planner-widget__header">
+              <div class="planner-widget__heading">
+                <h2 id="planner-title">Planner</h2>
+                <div class="planner-view-toggle" role="group" aria-label="Choose Planner view">
+                  <button class="is-active" type="button" data-planner-view="academic" aria-pressed="true">Academic</button>
+                  <button type="button" data-planner-view="personal" aria-pressed="false">Personal</button>
+                </div>
+              </div>
+              <a class="planner-widget__link" href="#workspace-planner" data-workspace-page="planner" aria-label="Open Planner page">
+                <svg viewBox="0 0 640 640" aria-hidden="true" focusable="false">
+                  <path d="M598.6 297.4C611.1 309.9 611.1 330.2 598.6 342.7L470.6 470.7C461.4 479.9 447.7 482.6 435.7 477.6C423.7 472.6 416 460.9 416 448L416 384L80 384C53.5 384 32 362.5 32 336L32 304C32 277.5 53.5 256 80 256L416 256L416 192C416 179.1 423.8 167.4 435.8 162.4C447.8 157.4 461.5 160.2 470.7 169.3L598.7 297.3z"></path>
+                </svg>
+              </a>
+            </header>
+            <div class="planner-widget__body">
+              <section class="planner-view is-active" id="academic-view" aria-label="Academic Planner">
+                <p class="planner-section-label">TODAY'S UPCOMING TASKS:</p>
+                <p class="planner-empty-state" id="academic-empty-state">NO TASKS FOR TODAY! 🫠</p>
+                <template id="planner-task-template">
+                  <article class="planner-task-card">
+                    <div class="planner-task-card__calendar" aria-label="Due date placeholder">
+                      <span class="planner-task-card__due-label">DUE BY:</span>
+                      <span class="planner-task-card__month">OCT</span>
+                      <strong class="planner-task-card__day">12</strong>
+                    </div>
+                    <div class="planner-task-card__details">
+                      <h3>Task name</h3>
+                      <div class="planner-task-card__tags" aria-label="Task classifications">
+                        <span>subject</span>
+                        <span>task type</span>
+                        <span>criterion</span>
+                      </div>
+                    </div>
+                    <label class="planner-task-card__checkbox">
+                      <input type="checkbox" aria-label="Mark task complete">
+                      <span aria-hidden="true"></span>
+                    </label>
+                    <button class="planner-task-card__edit" type="button" data-task-edit aria-label="Edit task">
+                      <span aria-hidden="true"></span>
+                    </button>
+                  </article>
+                </template>
+              </section>
+              <section class="planner-view" id="personal-view" aria-label="Personal Planner" hidden>
+                <p class="planner-empty-state" id="personal-empty-state">NO TASKS FOR TODAY! 🫠</p>
+                <div class="planner-personal" id="planner-routine-content" hidden></div>
+                <template id="planner-routine-template">
+                  <div class="planner-personal__workspace">
+                    <h3>Night Routine:</h3>
+                    <ul class="planner-routine-list">
+                      <li class="planner-routine-item">
+                        <label><input type="checkbox"><span>Face wash</span></label>
+                      </li>
+                      <li class="planner-routine-item">
+                        <label><input type="checkbox"><span>Apply cream</span></label>
+                      </li>
+                      <li class="planner-routine-item">
+                        <label><input type="checkbox"><span>Pack my bag</span></label>
+                      </li>
+                    </ul>
+                    <div class="planner-personal__summary">
+                        <div class="planner-personal__streak" aria-label="Streak: 0">
+                          <span>STREAK:</span>
+                          <strong>0</strong>
+                        </div>
+                        <div class="planner-personal__progress">
+                          <div class="planner-progress-bar" role="progressbar" aria-label="Routine progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                            <span class="planner-progress-bar__fill"></span>
+                          </div>
+                          <span class="planner-progress-value">0%</span>
+                        </div>
+                        <button class="planner-habit-garden" type="button" aria-label="See my Habit Garden">
+                          <svg viewBox="0 0 640 640" aria-hidden="true" focusable="false">
+                            <path d="M598.6 297.4C611.1 309.9 611.1 330.2 598.6 342.7L470.6 470.7C461.4 479.9 447.7 482.6 435.7 477.6C423.7 472.6 416 460.9 416 448L416 384L80 384C53.5 384 32 362.5 32 336L32 304C32 277.5 53.5 256 80 256L416 256L416 192C416 179.1 423.8 167.4 435.8 162.4C447.8 157.4 461.5 160.2 470.7 169.3L598.7 297.3z"></path>
+                          </svg>
+                          <span>SEE MY HABIT GARDEN</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </section>
+            </div>
+          </section>
+          <section class="emotion-dashboard-card" aria-labelledby="emotion-chart-title">
+          <div class="emotion-dashboard-card__heading">
+            <div>
+              <h2 id="emotion-chart-title">MOOD TRACKER:</h2>
+            </div>
+            <div class="emotion-period" role="group" aria-label="Choose emotion chart time period">
+              <button type="button" class="is-active" data-emotion-period="weekly" aria-pressed="true">Weekly</button>
+              <button type="button" data-emotion-period="monthly" aria-pressed="false">Monthly</button>
+            </div>
+          </div>
+          <div class="emotion-dashboard-card__content">
+            <div class="emotion-chart" id="emotion-chart" aria-label="Emotion log chart">
+              <svg class="emotion-chart__svg" viewBox="0 0 240 240" role="img" aria-labelledby="emotion-chart-svg-title emotion-chart-svg-description">
+                <title id="emotion-chart-svg-title">Your emotion log</title>
+                <desc id="emotion-chart-svg-description">A donut chart showing how often each emotion has been logged.</desc>
+                <circle class="emotion-chart__track" cx="120" cy="120" r="78"></circle>
+                <g id="emotion-chart-segments"></g>
+              </svg>
+              <div class="emotion-chart__center" aria-live="polite">
+                <img id="emotion-today-icon" src="" alt="" hidden>
+              </div>
+              <div class="emotion-chart__tooltip" id="emotion-chart-tooltip" role="status" aria-live="polite" hidden></div>
+            </div>
+          </div>
+          </section>
+          <div class="workspace-side-widgets">
+            <section class="breathing-widget" aria-labelledby="breathing-title">
+              <header class="breathing-widget__header">
+                <h2 id="breathing-title">Breathe & Unwind:</h2>
+              </header>
+              <div class="breathing-widget__stage">
+                <div class="breathing-widget__ring-box" aria-live="polite">
+                  <div class="breathing-widget__ring" id="breathing-ring" aria-hidden="true"></div>
+                  <div class="breathing-widget__readout">
+                    <p id="breathing-status">Ready</p>
+                    <span id="breathing-timer">4</span>
+                  </div>
+                </div>
+                <div class="breathing-widget__gif">
+                  <img
+                    class="breathing-widget__gif-art"
+                    src="assets/breathing-unwind.gif"
+                    alt="Meditating rabbit breathing animation"
+                  >
+                  <p>Credits: GIPHY</p>
+                </div>
+              </div>
+              <div class="breathing-widget__controls" aria-label="Breathing exercise controls">
+                <button type="button" class="breathing-control" id="breathing-toggle" aria-label="Start breathing exercise">
+                  <span class="breathing-control__icon breathing-control__icon--play" id="breathing-toggle-icon" aria-hidden="true"></span>
+                  <span id="breathing-toggle-label">Play</span>
+                </button>
+                <button type="button" class="breathing-control" id="breathing-reset" aria-label="Reset breathing exercise">
+                  <span class="breathing-control__icon breathing-control__icon--reset" aria-hidden="true"></span>
+                  <span>Reset</span>
+                </button>
+              </div>
+            </section>
+            <div class="workspace-side-widgets__bottom">
+              <button class="workspace-placeholder workspace-placeholder--small workspace-asmr-button" type="button" aria-label="ASMR Hub">
+                <span class="workspace-asmr-button__icon" aria-hidden="true"></span>
+                <span>ASMR Hub</span>
+              </button>
+              <button class="workspace-placeholder workspace-placeholder--small workspace-asmr-button workspace-entry-button" type="button" aria-label="New Entry">
+                <span class="workspace-entry-button__icon" aria-hidden="true"></span>
+                <span>New Entry</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="workspace-blank-page workspace-journal-page" id="workspace-journal" aria-label="My Journal" hidden>
+        <!-- Task 8: the book uses a left-hinged sheet, transparent stage, and paired landscape pages. -->
+        <div id="3d-book" class="journal-book" tabindex="0" aria-label="Journal Book">
+          <div class="journal-book__pages" id="journal-pages" aria-live="polite">
+            <div class="journal-sheet is-active" data-journal-sheet="0">
+              <article class="journal-page journal-page--notice">
+                <span class="journal-page__eyebrow">NOTICE</span>
+                <h2>Let's write it down</h2>
+                <p>This is a place to capture your thoughts, ideas, and feelings. From reflecting on your day, to planning your week, this is your space to express yourself.</p>
+                <h3>Remember, the most important thing is to get it all down!</h3>
+              </article>
+            </div>
+            <div class="journal-sheet" data-journal-sheet="new-entry" data-new-entry-sheet="true" hidden>
+              <article class="journal-page journal-page--new-entry">
+                <span class="journal-page__eyebrow">CREATE</span>
+                <h2>New Entry</h2>
+                <button class="journal-new-entry" type="button" data-journal-new-entry aria-label="Create a new journal entry">+</button>
+                <p>Start a fresh page in your journal.</p>
+              </article>
+            </div>
+          </div>
+          <div
+            class="journal-book__cover"
+            id="journal-front-cover"
+            role="button"
+            tabindex="0"
+            aria-expanded="false"
+            aria-controls="journal-pages"
+          >
+            <h1>Journal Book</h1>
+            <div class="journal-book__avatar-frame"><img id="journal-user-avatar" src="" alt=""></div>
+            <p class="journal-book__owner">Belongs to: <span id="journal-user-display">Student</span></p>
+            <span class="journal-book__spiral" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </span>
+            <span class="journal-book__prompt">use arrow keys or buttons below to open!</span>
+          </div>
+        </div>
+        <div class="journal-page-controls" aria-label="Journal page controls">
+          <button class="journal-page-control" type="button" data-journal-direction="-1" aria-label="Previous journal page">←</button>
+          <button class="journal-page-control" type="button" data-journal-direction="1" aria-label="Next journal page">→</button>
+        </div>
+        <button class="journal-close-bottom" id="journal-close-book" type="button" aria-label="Close journal book">← Cover</button>
+        <button class="journal-floating-add" type="button" data-journal-new-entry aria-label="Jump to the New Entry page">+</button>
+      </section>
+      <section class="workspace-blank-page journal-entry-canvas" id="journal-entry-canvas" aria-label="New journal entry" hidden>
+        <header class="journal-entry-canvas__header">
+          <button class="journal-entry-canvas__back" id="journal-entry-back" type="button" aria-label="Back to My Journal">←</button>
+          <div class="journal-entry-canvas__metadata">
+            <label for="journal-entry-date">Date:</label>
+            <time id="journal-entry-date"></time>
+            <label for="journal-entry-title">Title:</label>
+            <input id="journal-entry-title" type="text" autocomplete="off" placeholder="Add a title">
+          </div>
+          <button class="journal-entry-canvas__save" id="journal-entry-save" type="button">✓ SAVE</button>
+        </header>
+        <div class="journal-entry-canvas__body">
+          <aside class="journal-entry-canvas__tools" aria-label="Entry tools">
+            <button class="journal-entry-tool" type="button" data-feature-tool="prompts" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">💬</span>
+              <span>Prompts</span>
+            </button>
+            <button class="journal-entry-tool" type="button" data-feature-tool="note" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">📄</span>
+              <span>Note</span>
+            </button>
+            <button class="journal-entry-tool" type="button" data-feature-tool="stickers" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">⭐</span>
+              <span>Stickers</span>
+            </button>
+            <button class="journal-entry-tool" type="button" data-feature-tool="image" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">🖼️</span>
+              <span>Image</span>
+            </button>
+            <button class="journal-entry-tool" type="button" data-feature-tool="pen" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">✏️</span>
+              <span>Pen</span>
+            </button>
+          </aside>
+          <aside class="feature-expansion-drawer drawer-collapsed" id="feature-expansion-drawer" aria-label="Feature panel" aria-hidden="true">
+            <button class="feature-expansion-drawer__collapse" id="feature-expansion-drawer-collapse" type="button" aria-label="Collapse feature panel">‹</button>
+            <div class="feature-expansion-drawer__content" aria-live="polite"></div>
+          </aside>
+          <main id="canvas-typing-area" class="journal-entry-canvas__typing" aria-label="Journal entry writing area">
+            <div class="journal-entry-field journal-entry-field--heading" contenteditable="true" role="textbox" aria-label="Heading" data-entry-field="heading" data-placeholder="Heading"></div>
+            <div class="journal-entry-field journal-entry-field--subheading" contenteditable="true" role="textbox" aria-label="Subheading" data-entry-field="subheading" data-placeholder="Add a subheading"></div>
+            <div class="journal-entry-field journal-entry-field--body" contenteditable="true" role="textbox" aria-label="Body" data-entry-field="body" data-placeholder="Body"></div>
+          </main>
+        </div>
+      </section>
+      <section class="workspace-blank-page" id="workspace-wellness" aria-label="Wellness Portal" hidden></section>
+      <section class="workspace-blank-page" id="workspace-planner" aria-label="Planner" hidden>
+        <!-- Task 11: the planner foundation keeps Academic and Personal workspaces balanced for later task-card features. -->
+        <div class="planner-page-view" id="planner-page-view">
+          <div class="planner-page-view__columns">
+          <section class="planner-page-column" id="academic-planner-column" aria-labelledby="academic-planner-title">
+            <header class="planner-page-column__header">
+              <span class="planner-page-column__icon planner-page-column__icon--academic" aria-hidden="true"></span>
+              <h1 id="academic-planner-title">ACADEMIC PLANNER</h1>
+              <button class="planner-layout-toggle" type="button" aria-label="Expand Academic Planner" aria-pressed="false">
+                <span aria-hidden="true"></span>
+              </button>
+            </header>
+            <div class="planner-filter-row">
+              <label class="planner-subject-filter" for="planner-subject-select">
+                <span class="planner-subject-filter__icon" aria-hidden="true"></span>
+                <span class="planner-filter-label" style="color:#695049">SUBJECT:</span>
+                <select id="planner-subject-select">
+                  <option value="all">All Subjects</option>
+                </select>
+              </label>
+              <div class="planner-criteria-filter" role="group" aria-label="Assessment criteria">
+                <span class="planner-filter-label">CRITERION:</span>
+                <button class="is-active" type="button" data-criterion="all" aria-pressed="true">ALL</button>
+                <button type="button" data-criterion="A" aria-pressed="false">A</button>
+                <button type="button" data-criterion="B" aria-pressed="false">B</button>
+                <button type="button" data-criterion="C" aria-pressed="false">C</button>
+                <button type="button" data-criterion="D" aria-pressed="false">D</button>
+              </div>
+            </div>
+            <div class="planner-column-content">
+              <div class="planner-task-list" id="academic-tasks-list">
+                <p class="planner-task-list__empty">NO TASKS CREATED YET</p>
+              </div>
+              <button class="planner-new-deadline" id="academic-task-create-trigger" type="button" aria-label="Create new academic task">
+                <span aria-hidden="true"></span>
+                <span>NEW TASK</span>
+              </button>
+              <button class="planner-archived-trigger" id="academic-archived-trigger" type="button" data-archived-open aria-label="Completed tasks">
+                <span aria-hidden="true"></span>
+                <span>COMPLETED TASKS</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="planner-page-column" id="personal-planner-column" aria-labelledby="personal-planner-title">
+            <header class="planner-page-column__header">
+              <span class="planner-page-column__icon planner-page-column__icon--personal" aria-hidden="true"></span>
+              <h1 id="personal-planner-title">PERSONAL PLANNER</h1>
+              <button class="planner-layout-toggle" type="button" aria-label="Expand Personal Planner" aria-pressed="false">
+                <span aria-hidden="true"></span>
+              </button>
+            </header>
+            <div class="planner-column-content">
+              <div class="planner-placeholder-row">
+                <div class="planner-placeholder planner-placeholder--small" id="todo-box-placeholder">COMING SOON - TASK 12</div>
+                <div class="planner-placeholder planner-placeholder--small" id="routine-box-placeholder">COMING SOON - TASK 12</div>
+              </div>
+              <div class="planner-placeholder planner-placeholder--garden" id="habit-garden-placeholder">COMING SOON - TASK 13</div>
+            </div>
+          </section>
+          <section class="workspace-settings archived-tasks-modal" id="workspace-archived-tasks" aria-label="Archived Academic Tasks" hidden>
+            <div class="workspace-settings__surface">
+              <header class="archived-tasks-page__header">
+                <h1>ARCHIVED ACADEMIC TASKS</h1>
+                <button class="workspace-settings__close archived-tasks-page__close" id="archived-tasks-close" type="button" aria-label="Close completed tasks">×</button>
+              </header>
+              <div class="archived-tasks-page__list" id="archived-academic-tasks-list"></div>
+            </div>
+          </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ACADEMIC PLANNER stuff -->
+  <div class="task-creation-modal" id="task-creation-modal" hidden>
+    <div class="task-creation-modal__panel" role="dialog" aria-modal="true" aria-labelledby="task-creation-title">
+      <header class="task-creation-modal__header">
+        <h2 id="task-creation-title">New Task:</h2>
+        <button class="task-creation-modal__close" id="task-creation-modal-close" type="button" aria-label="Close task creation modal">×</button>
+      </header>
+      <div class="task-creation-modal__body">
+        <label class="task-creation-field">
+          <span>Task title</span>
+          <input id="task-title-input" type="text" maxlength="120" placeholder="Type your task title" autocomplete="off">
+        </label>
+        <label class="task-creation-field">
+          <span>Final deadline</span>
+          <input id="task-deadline-input" type="date">
+        </label>
+        <fieldset class="task-creation-days">
+          <legend>Working days</legend>
+          <p class="task-creation-help">Choose the dates you plan to work on this task.</p>
+          <div id="working-days-grid" class="working-days-grid" aria-live="polite">
+            <p class="working-days-grid__empty">Choose a deadline to see working days.</p>
+          </div>
+        </fieldset>
+        <div class="task-creation-modal__metadata">
+          <label class="task-creation-field">
+            <span>Subject:</span>
+            <select id="task-subject-select"></select>
+          </label>
+          <label class="task-creation-field">
+            <span>Criterion:</span>
+            <select id="task-criterion-select">
+              <option value="none" selected>None</option>
+              <option value="A">Criterion A</option>
+              <option value="B">Criterion B</option>
+              <option value="C">Criterion C</option>
+              <option value="D">Criterion D</option>
+            </select>
+          </label>
+          <label class="task-creation-field">
+            <span>Task Category:</span>
+            <select id="task-category-select">
+              <option value="">Choose a category</option>
+              <option value="Formative">Formative</option>
+              <option value="Summative">Summative</option>
+              <option value="ATL">ATL</option>
+              <option value="Classwork">Classwork</option>
+              <option value="Homework">Homework</option>
+            </select>
+          </label>
+        </div>
+        <p class="task-creation-modal__message" id="task-creation-message" role="status" aria-live="polite"></p>
+      </div>
+      <footer class="task-creation-modal__footer">
+        <button class="task-creation-modal__submit" id="task-creation-submit" type="button">✓ Create Task</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="journal-entry-discard-modal" id="journal-entry-discard-modal" hidden>
+    <div class="journal-entry-discard-modal__panel" role="alertdialog" aria-modal="true" aria-labelledby="journal-entry-discard-title">
+      <h2 id="journal-entry-discard-title">Unsaved changes</h2>
+      <p>You have unsaved changes! Are you sure you want to discard them?</p>
+      <div class="journal-entry-discard-modal__actions">
+        <button id="journal-entry-discard-cancel" type="button">Cancel / Continue Editing</button>
+        <button id="journal-entry-discard-confirm" type="button">Yes / Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="emotion-overlay" id="emotion-overlay" hidden></div>
+  <section class="emotion-checkin" id="emotion-checkin" role="dialog" aria-modal="true" aria-labelledby="emotion-greeting" aria-describedby="emotion-question" hidden>
+    <svg class="emotion-checkin__shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="1" y="1" width="98" height="98" rx="5" fill="var(--color-container)" stroke="var(--color-tag)" stroke-width="1.5"></rect>
+    </svg>
+    <div class="emotion-checkin__content">
+      <h2 class="emotion-checkin__greeting" id="emotion-greeting"><span class="emotion-checkin__time-icon" id="emotion-greeting-icon" aria-hidden="true">☀️</span><span id="emotion-greeting-text">Good Morning</span></h2>
+      <p class="emotion-checkin__personalized" id="emotion-personalized"></p>
+      <p class="emotion-checkin__question" id="emotion-question">How are you feeling today?</p>
+      <div class="emotion-options" id="emotion-options" role="group" aria-label="Choose one emotion">
+        <button class="emotion-option" type="button" data-emotion="excited" aria-pressed="false">
+          <img src="assets/emotion-excited.png" alt=""><span>Excited</span>
+        </button>
+        <button class="emotion-option" type="button" data-emotion="happy" aria-pressed="false">
+          <img src="assets/emotion-happy.png" alt=""><span>Happy</span>
+        </button>
+        <button class="emotion-option" type="button" data-emotion="sad" aria-pressed="false">
+          <img src="assets/emotion-sad.png" alt=""><span>Sad</span>
+        </button>
+        <button class="emotion-option" type="button" data-emotion="stressed" aria-pressed="false">
+          <img src="assets/emotion-stressed.png" alt=""><span>Stressed</span>
+        </button>
+        <button class="emotion-option" type="button" data-emotion="nervous" aria-pressed="false">
+          <img src="assets/emotion-nervous.svg" alt=""><span>Nervous</span>
+        </button>
+        <button class="emotion-option" type="button" data-emotion="angry" aria-pressed="false">
+          <img src="assets/emotion-angry.png" alt=""><span>Angry</span>
+        </button>
+        <button class="emotion-option" type="button" data-emotion="tired" aria-pressed="false">
+          <img src="assets/emotion-tired.png" alt=""><span>Tired</span>
+        </button>
+      </div>
+      <p class="emotion-checkin__message" id="emotion-checkin-message" role="status" aria-live="polite"></p>
+      <button class="emotion-checkin__submit" id="emotion-submit" type="button" disabled>Submit <img src="assets/icon-checkin.svg" alt="" aria-hidden="true"></button>
+    </div>
+  </section>
+  <!-- Auth portal: separate views keep sign-up, login, and the signed-in state in one accessible dialog. -->
+  <dialog class="auth-dialog" id="auth-dialog" aria-label="Little Orbit account portal">
+    <button class="auth-dialog__close" type="button" aria-label="Close dialog">×</button>
+    <div class="auth-dialog__content">
+      <section class="auth-view" id="login-view" aria-labelledby="login-title">
+        <span class="auth-dialog__icon" aria-hidden="true">🪐</span>
+        <p class="eyebrow">welcome back, star student</p>
+        <h2 id="login-title">Log in to your orbit</h2>
+        <p class="auth-view__intro">Pick up right where you left off.</p>
+        <form class="auth-form" id="login-form" novalidate>
+          <label class="form-field">
+            <span>Username</span>
+            <input name="username" id="login-username" type="text" autocomplete="username" required>
+          </label>
+          <label class="form-field">
+            <span>Password</span>
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <p class="form-message" id="login-message" role="status" aria-live="polite"></p>
+          <button class="button auth-form__submit" type="submit">Log in <span aria-hidden="true">↗</span></button>
+          <div class="auth-divider" aria-hidden="true"><span>or</span></div>
+          <button class="google-signin" id="google-signin-preview" type="button" data-google-signin>
+            <svg class="google-signin__icon" aria-hidden="true" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.93c-.58 2.96-2.26 5.48-4.76 7.18l7.73 6C44.4 37.98 46.98 31.9 46.98 24.55Z"/>
+              <path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19Z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.8l-7.73-6c-2.14 1.44-4.88 2.3-8.17 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+          <p class="google-signin__note">Google sign-in is a preview and isn’t connected yet.</p>
+        </form>
+        <p class="auth-switch">New around here? <button type="button" data-show-signup>Make an account</button></p>
+      </section>
+
+      <section class="auth-view" id="signup-view" aria-labelledby="signup-title" hidden>
+        <span class="auth-dialog__icon" aria-hidden="true">🪐</span>
+        <p class="eyebrow">your little corner of the universe</p>
+        <h2 id="signup-title">Create your orbit</h2>
+        <p class="auth-view__intro">A few little details, then you’re in.</p>
+
+        <!-- A four-step flow separates credentials, profile, grade, and curriculum choices. -->
+        <ol class="signup-progress" aria-label="Sign-up progress">
+          <li class="is-current" data-progress-step="1"><span>1</span><span>Account</span></li>
+          <li data-progress-step="2"><span>2</span><span>Profile</span></li>
+          <li data-progress-step="3"><span>3</span><span>Grade</span></li>
+          <li data-progress-step="4"><span>4</span><span>Subjects</span></li>
+        </ol>
+
+        <form class="auth-form signup-form" id="signup-form" novalidate>
+          <section class="signup-step" data-signup-step="1" aria-labelledby="signup-step-one-title">
+            <h3 id="signup-step-one-title" class="visually-hidden">Create your account</h3>
+            <label class="form-field">
+              <span>Email address</span>
+              <input id="signup-email" name="email" type="email" autocomplete="email" placeholder="name@sis.edu.in" required>
+            </label>
+            <label class="form-field">
+              <span>Password</span>
+              <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="6" aria-describedby="password-help" required>
+              <small id="password-help">Use at least 6 characters.</small>
+            </label>
+            <label class="form-field">
+              <span>Confirm password</span>
+              <input id="signup-password-confirm" name="passwordConfirm" type="password" autocomplete="new-password" minlength="6" required>
+            </label>
+            <p class="form-message" id="signup-account-message" role="status" aria-live="polite"></p>
+            <button class="button auth-form__submit" type="button" data-signup-next="1">Continue <span aria-hidden="true">→</span></button>
+            <div class="auth-divider" aria-hidden="true"><span>or</span></div>
+            <button class="google-signin" type="button" data-google-signin>
+              <svg class="google-signin__icon" aria-hidden="true" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.93c-.58 2.96-2.26 5.48-4.76 7.18l7.73 6C44.4 37.98 46.98 31.9 46.98 24.55Z"/>
+                <path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19Z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.8l-7.73-6c-2.14 1.44-4.88 2.3-8.17 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+            <p class="google-signin__note">Google sign-up is a preview and isn’t connected yet (coming soon!)</p>
+          </section>
+
+          <section class="signup-step" data-signup-step="2" aria-labelledby="signup-step-two-title" hidden>
+            <h3 id="signup-step-two-title" class="visually-hidden">Choose a username and profile picture</h3>
+            <label class="form-field">
+              <span>Username</span>
+              <input id="signup-username" name="username" type="text" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9._+-]+" aria-describedby="username-help" required>
+              <small id="username-help">We’ll suggest one from your email. You can change it.</small>
+            </label>
+            <div class="form-field">
+              <span>Profile picture <span class="form-field__optional">optional</span></span>
+              <div class="profile-upload">
+                <img id="profile-preview" alt="Your profile picture preview">
+                <label class="profile-upload__button">
+                  <span>Choose a picture</span>
+                  <input id="profile-picture" name="profilePicture" type="file" accept="image/*">
+                </label>
+                <small>JPG, PNG, GIF, or WebP - up to 2 MB</small>
+              </div>
+            </div>
+            <p class="form-message" id="signup-profile-message" role="status" aria-live="polite"></p>
+            <div class="signup-step__actions">
+              <button class="button button--secondary" type="button" data-signup-back="1">Back</button>
+              <button class="button auth-form__submit" type="button" data-signup-next="2">Continue <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <section class="signup-step" data-signup-step="3" aria-labelledby="signup-step-three-title" hidden>
+            <h3 id="signup-step-three-title" class="visually-hidden">Choose your grade</h3>
+            <label class="form-field">
+              <span>Your grade</span>
+              <select id="signup-grade" name="grade" required>
+                <option value="">Choose your MYP year</option>
+                <option value="MYP 1">MYP 1</option>
+                <option value="MYP 2">MYP 2</option>
+                <option value="MYP 3">MYP 3</option>
+                <option value="MYP 4">MYP 4</option>
+                <option value="MYP 5">MYP 5</option>
+              </select>
+            </label>
+            <p class="form-message" id="signup-grade-message" role="status" aria-live="polite"></p>
+            <div class="signup-step__actions">
+              <button class="button button--secondary" type="button" data-signup-back="2">Back</button>
+              <button class="button auth-form__submit" type="button" data-signup-next="3">Choose subjects <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <section class="signup-step" data-signup-step="4" aria-labelledby="signup-step-four-title" hidden>
+            <h3 id="signup-step-four-title" class="visually-hidden">Choose your subjects</h3>
+            <div class="subjects-grid" id="subjects-container" aria-live="polite">
+              <p class="subjects-placeholder">Choose your MYP year to see your subject options.</p>
+            </div>
+            <p class="form-message" id="signup-subject-message" role="status" aria-live="polite"></p>
+            <div class="signup-step__actions">
+              <button class="button button--secondary" type="button" data-signup-back="3"><span aria-hidden="true">←</span> Back</button>
+              <button class="button auth-form__submit" type="submit">Create my account <span aria-hidden="true">✦</span></button>
+            </div>
+          </section>
+        </form>
+        <p class="auth-switch">Already have an account? <button type="button" data-show-login>Log in</button></p>
+      </section>
+
+      <section class="auth-view auth-view--profile" id="profile-view" aria-labelledby="profile-title" hidden>
+        <img class="profile-view__avatar" id="profile-avatar" alt="">
+        <p class="eyebrow">you’re back in your orbit</p>
+        <h2 id="profile-title">Welcome back!</h2>
+        <p class="profile-view__details" id="profile-details"></p>
+        <button class="button auth-form__submit" id="logout-button" type="button">Log out</button>
+      </section>
+    </div>
+  </dialog>
+</body>
+</html>
