@@ -1209,6 +1209,20 @@ plannerLayoutToggles.forEach((toggle) => {
     const column = toggle.closest(".planner-page-column");
     if (!column) return;
     const isExpanded = column.classList.toggle("is-expanded");
+    if (isExpanded) {
+      document.querySelectorAll(".planner-page-column").forEach((otherColumn) => {
+        if (otherColumn === column) return;
+        otherColumn.classList.remove("is-expanded");
+        otherColumn.classList.add("is-hidden");
+        const otherToggle = otherColumn.querySelector(".planner-layout-toggle");
+        otherToggle?.setAttribute("aria-pressed", "false");
+        otherToggle?.setAttribute("aria-label", `Expand ${otherColumn.id === "academic-planner-column" ? "Academic" : "Personal"} Planner`);
+      });
+    } else {
+      document.querySelectorAll(".planner-page-column").forEach((otherColumn) => {
+        otherColumn.classList.remove("is-hidden");
+      });
+    }
     toggle.setAttribute("aria-pressed", String(isExpanded));
     toggle.setAttribute("aria-label", `${isExpanded ? "Minimize" : "Expand"} ${column.id === "academic-planner-column" ? "Academic" : "Personal"} Planner`);
     const icon = toggle.querySelector("span");
@@ -1229,6 +1243,24 @@ const plannerAcademicView = document.querySelector("#academic-view");
 const plannerPersonalView = document.querySelector("#personal-view");
 const plannerRoutineContent = document.querySelector("#planner-routine-content");
 const plannerPersonalEmptyState = document.querySelector("#personal-empty-state");
+const personalRoutineCreateTrigger = document.querySelector("#personal-routine-create-trigger");
+const personalRoutineList = document.querySelector("#personal-routine-list");
+const personalRoutineEmpty = document.querySelector("#personal-routine-empty");
+const routineCreationModal = document.querySelector("#routine-creation-modal");
+const routineCreationModalClose = document.querySelector("#routine-creation-modal-close");
+const routineTitleInput = document.querySelector("#routine-title-input");
+const routineItemsInputs = document.querySelector("#routine-items-inputs");
+const routineAddItem = document.querySelector("#routine-add-item");
+const routineJustToday = document.querySelector("#routine-just-today");
+const routineDayInputs = [...document.querySelectorAll(".routine-day-selector__grid input")];
+const routineCreationMessage = document.querySelector("#routine-creation-message");
+const recentlyCompletedPersonalItems = new Set();
+const routineCreationSubmit = document.querySelector("#routine-creation-submit");
+const streakAnimationImage = document.querySelector("#streak-animation-image");
+const personalStreakValue = document.querySelector("#personal-streak-value");
+const habitGardenGrid = document.querySelector("#habit-garden-grid");
+const personalRoutineStorageKey = "littleOrbitPersonalRoutines";
+let editingPersonalRoutineId = null;
 
 document.querySelectorAll("[data-planner-view]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -1241,6 +1273,7 @@ document.querySelectorAll("[data-planner-view]").forEach((button) => {
       viewButton.classList.toggle("is-active", isActive);
       viewButton.setAttribute("aria-pressed", String(isActive));
     });
+    if (showPersonal) renderPersonalRoutines();
   });
 });
 
@@ -1359,24 +1392,24 @@ function renderPlannerTasks() {
     }
     renderArchivedPlannerTasks(tasks);
   }
+}
 
-  function renderArchivedPlannerTasks(tasks = readOrbitTasks()) {
-    const archivedList = document.querySelector("#archived-academic-tasks-list");
-    if (!archivedList) return;
-    const archivedTasks = sortPlannerTasksByDeadline(tasks.filter((task) => task.completed));
-    archivedList.replaceChildren();
-    if (!archivedTasks.length) {
-      const emptyState = document.createElement("p");
-      emptyState.className = "planner-task-list__empty";
-      emptyState.textContent = "NO COMPLETED TASKS YET";
-      archivedList.append(emptyState);
-      return;
-    }
-    archivedTasks.forEach((task) => {
-      const card = plannerTaskCard(task, { archived: true });
-      if (card) archivedList.append(card);
-    });
+function renderArchivedPlannerTasks(tasks = readOrbitTasks()) {
+  const archivedList = document.querySelector("#archived-academic-tasks-list");
+  if (!archivedList) return;
+  const archivedTasks = sortPlannerTasksByDeadline(tasks.filter((task) => task.completed));
+  archivedList.replaceChildren();
+  if (!archivedTasks.length) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "planner-task-list__empty";
+    emptyState.textContent = "NO COMPLETED TASKS YET";
+    archivedList.append(emptyState);
+    return;
   }
+  archivedTasks.forEach((task) => {
+    const card = plannerTaskCard(task, { archived: true });
+    if (card) archivedList.append(card);
+  });
 }
 
 function renderTaskSubjectOptions() {
@@ -1508,6 +1541,12 @@ taskDeadlineInput?.addEventListener("change", () => {
 taskCreationSubmit?.addEventListener("click", createOrbitTask);
 
 document.addEventListener("click", (event) => {
+  const personalRoutineEdit = event.target.closest("[data-personal-routine-edit]");
+  if (personalRoutineEdit) {
+    const routine = readPersonalRoutines().find((candidate) => candidate.id === personalRoutineEdit.dataset.personalRoutineEdit);
+    if (routine) openRoutineCreationModal(routine);
+    return;
+  }
   const archivedTrigger = event.target.closest("[data-archived-open]");
   if (archivedTrigger) {
     archivedTasksModal.hidden = false;
@@ -1541,12 +1580,275 @@ document.addEventListener("keydown", (event) => {
     closeTaskCreationModal();
   } else if (event.key === "Escape" && archivedTasksModal && !archivedTasksModal.hidden) {
     archivedTasksModal.hidden = true;
+  } else if (event.key === "Escape" && routineCreationModal && !routineCreationModal.hidden) {
+    closeRoutineCreationModal();
   }
 });
 
 function renderPlannerAcademicState() {
   const hasTasks = plannerAcademicView.querySelector("[data-orbit-task-card]") !== null;
   document.querySelector("#academic-empty-state").hidden = hasTasks;
+}
+
+function getPersonalRoutineStorageKey() {
+  const identity = activeUser?.email || activeUser?.username || "guest";
+  return `${personalRoutineStorageKey}:${identity.toLowerCase()}`;
+}
+
+function readPersonalRoutines() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(getPersonalRoutineStorageKey()) || "[]");
+    return Array.isArray(stored) ? stored : [];
+  } catch (error) {
+    console.error("Unable to read Little Orbit personal routines.", error);
+    return [];
+  }
+}
+
+function writePersonalRoutines(routines) {
+  try {
+    localStorage.setItem(getPersonalRoutineStorageKey(), JSON.stringify(routines));
+    return true;
+  } catch (error) {
+    console.error("Unable to save Little Orbit personal routines.", error);
+    return false;
+  }
+}
+
+function personalRoutineIsActiveToday(routine, date = new Date()) {
+  if (routine.justForToday) return routine.createdDate === localDateKey(date);
+  return Array.isArray(routine.repeatDays) && routine.repeatDays.includes(date.getDay());
+}
+
+function updatePersonalStreak(completedToday) {
+  const key = `${getPersonalRoutineStorageKey()}:streak`;
+  const today = localDateKey();
+  let state = { count: 0, lastDate: "" };
+  try {
+    state = JSON.parse(localStorage.getItem(key) || JSON.stringify(state));
+  } catch (error) {
+    console.error("Unable to read Little Orbit personal streak.", error);
+  }
+  if (completedToday && state.lastDate !== today) {
+    const yesterday = new Date(`${today}T00:00:00`);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = localDateKey(yesterday);
+    state.count = state.lastDate === yesterdayKey ? state.count + 1 : 1;
+    state.lastDate = today;
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch (error) {
+    console.error("Unable to save Little Orbit personal streak.", error);
+  }
+  renderPersonalStreak(state.count);
+}
+
+function renderPersonalStreak(count = 0) {
+  if (personalStreakValue) personalStreakValue.textContent = String(count);
+  if (!streakAnimationImage) return;
+  const isActive = count > 0;
+  streakAnimationImage.src = isActive ? "assets/streak.gif" : "assets/streak-zero.png";
+  streakAnimationImage.classList.toggle("is-active", isActive);
+}
+
+function getPersonalGardenStorageKey() {
+  return `${getPersonalRoutineStorageKey()}:garden`;
+}
+
+function readPersonalGardenState() {
+  const plotCount = habitGardenGrid?.querySelectorAll(".habit-garden-plot").length || 9;
+  const emptyState = { stages: Array(plotCount).fill(0), startedDate: "", expiresDate: "" };
+  try {
+    const stored = JSON.parse(localStorage.getItem(getPersonalGardenStorageKey()) || "null");
+    const stages = Array.isArray(stored) ? stored : stored?.stages;
+    if (!Array.isArray(stages)) return emptyState;
+    if (stored?.expiresDate && localDateKey() > stored.expiresDate) return emptyState;
+    return {
+      stages: Array.from({ length: plotCount }, (_, index) => Number(stages[index]) === 1 ? 1 : 0),
+      startedDate: stored?.startedDate || "",
+      expiresDate: stored?.expiresDate || "",
+    };
+  } catch (error) {
+    console.error("Unable to read Little Orbit habit garden.", error);
+    return emptyState;
+  }
+}
+
+function writePersonalGardenState(state) {
+  try {
+    localStorage.setItem(getPersonalGardenStorageKey(), JSON.stringify(state));
+    return true;
+  } catch (error) {
+    console.error("Unable to save Little Orbit habit garden.", error);
+    return false;
+  }
+}
+
+function renderPersonalGarden(state = readPersonalGardenState()) {
+  if (!habitGardenGrid) return;
+  [...habitGardenGrid.querySelectorAll(".habit-garden-plot")].forEach((plot, index) => {
+    const stage = state.stages[index] === 1 ? 1 : 0;
+    plot.dataset.flowerStage = String(stage);
+    plot.querySelector(".habit-garden-flower")?.setAttribute("data-stage", String(stage));
+  });
+}
+
+function triggerFlowerGrowth(completed) {
+  if (!habitGardenGrid) return;
+  const state = readPersonalGardenState();
+  const stages = state.stages;
+  if (completed) {
+    if (!state.startedDate || localDateKey() > state.expiresDate) {
+      const start = localDateKey();
+      const expiry = new Date(`${start}T00:00:00`);
+      expiry.setDate(expiry.getDate() + 7);
+      state.startedDate = start;
+      state.expiresDate = localDateKey(expiry);
+      stages.fill(0);
+    }
+    const emptyIndexes = stages.map((stage, index) => stage === 0 ? index : -1).filter((index) => index >= 0);
+    if (emptyIndexes.length) stages[emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)]] = 1;
+  } else {
+    const bloomingIndexes = stages.map((stage, index) => stage === 1 ? index : -1).filter((index) => index >= 0);
+    if (bloomingIndexes.length) stages[bloomingIndexes[Math.floor(Math.random() * bloomingIndexes.length)]] = 0;
+  }
+  if (writePersonalGardenState(state)) renderPersonalGarden(state);
+}
+
+function renderPersonalRoutines() {
+  if (!personalRoutineList) return;
+  renderPersonalGarden();
+  const today = new Date();
+  const todayKey = localDateKey(today);
+  const activeRoutines = readPersonalRoutines().filter((routine) => personalRoutineIsActiveToday(routine, today));
+  personalRoutineList.replaceChildren();
+  if (!activeRoutines.length) {
+    personalRoutineEmpty.hidden = false;
+    updatePersonalStreak(false);
+    return;
+  }
+  personalRoutineEmpty.hidden = true;
+  activeRoutines.forEach((routine) => {
+    const card = document.createElement("article");
+    card.className = "personal-routine-card";
+    card.dataset.personalRoutineId = routine.id;
+    const header = document.createElement("header");
+    header.className = "personal-routine-card__header";
+    const title = document.createElement("h3");
+    title.textContent = routine.title;
+    const edit = document.createElement("button");
+    edit.className = "personal-routine-card__edit";
+    edit.type = "button";
+    edit.dataset.personalRoutineEdit = routine.id;
+    edit.setAttribute("aria-label", `Edit ${routine.title}`);
+    header.append(title, edit);
+    const list = document.createElement("ul");
+    list.className = "personal-routine-card__items";
+    routine.items.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.className = "personal-routine-item";
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      const isComplete = item.completedOn === todayKey;
+      if (isComplete && !recentlyCompletedPersonalItems.has(item.id)) return;
+      input.checked = isComplete;
+      input.dataset.personalRoutineItem = item.id;
+      const text = document.createElement("span");
+      text.textContent = item.text;
+      listItem.classList.toggle("is-complete", input.checked);
+      label.append(input, text);
+      listItem.append(label);
+      list.append(listItem);
+    });
+    card.append(header, list);
+    personalRoutineList.append(card);
+  });
+  const completedToday = activeRoutines.some((routine) => routine.items.some((item) => item.completedOn === todayKey));
+  updatePersonalStreak(completedToday);
+}
+
+function addRoutineItemInput(value = "") {
+  if (!routineItemsInputs) return;
+  const row = document.createElement("label");
+  row.className = "routine-item-input";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.maxLength = 100;
+  input.placeholder = "Checklist item";
+  input.value = value;
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "routine-item-remove";
+  remove.textContent = "×";
+  remove.setAttribute("aria-label", "Remove checklist item");
+  remove.addEventListener("click", () => row.remove());
+  row.append(input, remove);
+  routineItemsInputs.append(row);
+}
+
+function setRoutineCreationMessage(message = "") {
+  if (routineCreationMessage) routineCreationMessage.textContent = message;
+}
+
+function openRoutineCreationModal(routine = null) {
+  if (!routineCreationModal) return;
+  editingPersonalRoutineId = routine?.id || null;
+  routineTitleInput.value = routine?.title || "";
+  routineJustToday.checked = Boolean(routine?.justForToday);
+  routineDayInputs.forEach((input) => {
+    input.checked = Boolean(routine?.repeatDays?.includes(Number(input.value)));
+    input.disabled = routineJustToday.checked;
+  });
+  routineItemsInputs.replaceChildren();
+  (routine?.items?.length ? routine.items : [{ text: "" }]).forEach((item) => addRoutineItemInput(item.text));
+  routineCreationSubmit.textContent = routine ? "✓ Save Routine" : "✓ Create Routine";
+  setRoutineCreationMessage("");
+  routineCreationModal.hidden = false;
+  document.body.classList.add("task-creation-modal-open");
+  routineTitleInput.focus();
+}
+
+function closeRoutineCreationModal() {
+  if (!routineCreationModal) return;
+  routineCreationModal.hidden = true;
+  document.body.classList.remove("task-creation-modal-open");
+  editingPersonalRoutineId = null;
+}
+
+function savePersonalRoutine() {
+  const title = routineTitleInput.value.trim();
+  const items = [...routineItemsInputs.querySelectorAll("input")].map((input) => input.value.trim()).filter(Boolean);
+  const repeatDays = routineDayInputs.filter((input) => input.checked).map((input) => Number(input.value));
+  if (!title || !items.length || (!routineJustToday.checked && !repeatDays.length)) {
+    setRoutineCreationMessage("Add a title, at least one checklist item, and a repeat day or Just for Today.");
+    return;
+  }
+  const routines = readPersonalRoutines();
+  const existing = routines.find((routine) => routine.id === editingPersonalRoutineId);
+  const existingItems = new Map((existing?.items || []).map((item) => [item.text, item]));
+  const routine = {
+    id: editingPersonalRoutineId || `routine-${Date.now()}`,
+    title,
+    repeatDays: routineJustToday.checked ? [] : repeatDays,
+    justForToday: routineJustToday.checked,
+    createdDate: existing?.createdDate || localDateKey(),
+    items: items.map((text) => ({
+      id: existingItems.get(text)?.id || `routine-item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      text,
+      completedOn: existingItems.get(text)?.completedOn || "",
+    })),
+  };
+  const nextRoutines = existing
+    ? routines.map((candidate) => candidate.id === routine.id ? routine : candidate)
+    : [...routines, routine];
+  if (!writePersonalRoutines(nextRoutines)) {
+    setRoutineCreationMessage("This routine could not be saved in this browser.");
+    return;
+  }
+  closeRoutineCreationModal();
+  renderPersonalRoutines();
 }
 
 function renderPlannerPersonalState() {
@@ -1594,7 +1896,67 @@ new MutationObserver(renderPlannerAcademicState).observe(plannerAcademicView, {
 
 plannerPersonalView.addEventListener("change", (event) => {
   if (!(event.target instanceof HTMLInputElement) || event.target.type !== "checkbox") return;
+  const itemInput = event.target.closest("[data-personal-routine-item]");
+  if (itemInput) {
+    const card = itemInput.closest("[data-personal-routine-id]");
+    const routineId = card?.dataset.personalRoutineId;
+    const itemId = itemInput.dataset.personalRoutineItem;
+    const today = localDateKey();
+    const routines = readPersonalRoutines();
+    const updatedRoutines = routines.map((routine) => routine.id === routineId
+      ? {
+          ...routine,
+          items: routine.items.map((item) => item.id === itemId
+            ? { ...item, completedOn: itemInput.checked ? today : "" }
+            : item),
+        }
+      : routine);
+    if (writePersonalRoutines(updatedRoutines)) {
+      if (itemInput.checked) recentlyCompletedPersonalItems.add(itemId);
+      else recentlyCompletedPersonalItems.delete(itemId);
+      triggerFlowerGrowth(itemInput.checked);
+      renderPersonalRoutines();
+      if (itemInput.checked) {
+        window.setTimeout(() => {
+          recentlyCompletedPersonalItems.delete(itemId);
+          renderPersonalRoutines();
+        }, 1000);
+      }
+    }
+    return;
+  }
   renderPlannerPersonalState();
+});
+
+personalRoutineList?.addEventListener("change", (event) => {
+  if (!(event.target instanceof HTMLInputElement) || event.target.type !== "checkbox") return;
+  const itemInput = event.target;
+  const card = itemInput.closest("[data-personal-routine-id]");
+  const routineId = card?.dataset.personalRoutineId;
+  const itemId = itemInput.dataset.personalRoutineItem;
+  if (!routineId || !itemId) return;
+  const today = localDateKey();
+  const routines = readPersonalRoutines();
+  const updatedRoutines = routines.map((routine) => routine.id === routineId
+    ? {
+        ...routine,
+        items: routine.items.map((item) => item.id === itemId
+          ? { ...item, completedOn: itemInput.checked ? today : "" }
+          : item),
+      }
+    : routine);
+  if (writePersonalRoutines(updatedRoutines)) {
+    if (itemInput.checked) recentlyCompletedPersonalItems.add(itemId);
+    else recentlyCompletedPersonalItems.delete(itemId);
+    triggerFlowerGrowth(itemInput.checked);
+    renderPersonalRoutines();
+    if (itemInput.checked) {
+      window.setTimeout(() => {
+        recentlyCompletedPersonalItems.delete(itemId);
+        renderPersonalRoutines();
+      }, 1000);
+    }
+  }
 });
 
 new MutationObserver(renderPlannerPersonalState).observe(plannerRoutineContent, {
@@ -1605,6 +1967,18 @@ new MutationObserver(renderPlannerPersonalState).observe(plannerRoutineContent, 
 renderPlannerAcademicState();
 renderPlannerPersonalState();
 renderPlannerTasks();
+renderPersonalRoutines();
+
+personalRoutineCreateTrigger?.addEventListener("click", () => openRoutineCreationModal());
+routineCreationModalClose?.addEventListener("click", closeRoutineCreationModal);
+routineCreationSubmit?.addEventListener("click", savePersonalRoutine);
+routineAddItem?.addEventListener("click", () => addRoutineItemInput());
+routineJustToday?.addEventListener("change", () => {
+  routineDayInputs.forEach((input) => {
+    input.disabled = routineJustToday.checked;
+    if (routineJustToday.checked) input.checked = false;
+  });
+});
 
 // C.1 layout blueprint: the breathing widget runs a paused-by-default 4-4-4 cycle.
 const breathingRing = document.querySelector("#breathing-ring");

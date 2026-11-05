@@ -655,11 +655,38 @@
               </button>
             </header>
             <div class="planner-column-content">
-              <div class="planner-placeholder-row">
-                <div class="planner-placeholder planner-placeholder--small" id="todo-box-placeholder">COMING SOON - TASK 12</div>
-                <div class="planner-placeholder planner-placeholder--small" id="routine-box-placeholder">COMING SOON - TASK 12</div>
+              <button class="planner-new-deadline planner-new-routine" id="personal-routine-create-trigger" type="button" aria-label="Create a new routine">
+                <span aria-hidden="true"></span>
+                <span>NEW ROUTINE</span>
+              </button>
+              <div class="personal-planner__workspace">
+                <div class="personal-planner__lists" id="personal-routine-list" aria-live="polite">
+                  <p class="planner-task-list__empty" id="personal-routine-empty">NO ROUTINES FOR TODAY</p>
+                </div>
+                <section class="habit-garden-workspace" aria-labelledby="habit-garden-title">
+                  <div class="habit-garden-workspace__topline">
+                    <div class="planner-personal__streak" aria-label="Current streak: 0">
+                      <span>STREAK:</span>
+                      <strong id="personal-streak-value">0</strong>
+                    </div>
+                    <div id="streak-animation-container" aria-label="Streak animation">
+                      <img id="streak-animation-image" src="assets/streak-zero.png" alt="" aria-hidden="true">
+                    </div>
+                    <h2 id="habit-garden-title">WEEKLY HABIT GARDEN</h2>
+                  </div>
+                  <div class="habit-garden-grid" id="habit-garden-grid" role="img" aria-label="Weekly habit garden">
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                    <div class="habit-garden-plot"><span class="habit-garden-flower" aria-hidden="true"></span></div>
+                  </div>
+                </section>
               </div>
-              <div class="planner-placeholder planner-placeholder--garden" id="habit-garden-placeholder">COMING SOON - TASK 13</div>
             </div>
           </section>
           <section class="workspace-settings archived-tasks-modal" id="workspace-archived-tasks" aria-label="Archived Academic Tasks" hidden>
@@ -731,6 +758,43 @@
       </div>
       <footer class="task-creation-modal__footer">
         <button class="task-creation-modal__submit" id="task-creation-submit" type="button">✓ Create Task</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="task-creation-modal routine-creation-modal" id="routine-creation-modal" hidden>
+    <div class="task-creation-modal__panel" role="dialog" aria-modal="true" aria-labelledby="routine-creation-title">
+      <header class="task-creation-modal__header">
+        <h2 id="routine-creation-title">New Routine:</h2>
+        <button class="task-creation-modal__close" id="routine-creation-modal-close" type="button" aria-label="Close routine creation modal">×</button>
+      </header>
+      <div class="task-creation-modal__body">
+        <label class="task-creation-field">
+          <span>Routine title</span>
+          <input id="routine-title-input" type="text" maxlength="120" placeholder="Type your routine title" autocomplete="off">
+        </label>
+        <fieldset class="routine-day-selector">
+          <legend>Repeat on</legend>
+          <div class="routine-day-selector__grid">
+            <label><input type="checkbox" value="1"><span>Mon</span></label>
+            <label><input type="checkbox" value="2"><span>Tue</span></label>
+            <label><input type="checkbox" value="3"><span>Wed</span></label>
+            <label><input type="checkbox" value="4"><span>Thu</span></label>
+            <label><input type="checkbox" value="5"><span>Fri</span></label>
+            <label><input type="checkbox" value="6"><span>Sat</span></label>
+            <label><input type="checkbox" value="0"><span>Sun</span></label>
+          </div>
+          <label class="routine-today-toggle"><input id="routine-just-today" type="checkbox"><span>Just for Today</span></label>
+        </fieldset>
+        <fieldset class="routine-items-editor">
+          <legend>Checklist items</legend>
+          <div id="routine-items-inputs"></div>
+          <button class="routine-add-item" id="routine-add-item" type="button">+ Add checklist item</button>
+        </fieldset>
+        <p class="task-creation-modal__message" id="routine-creation-message" role="status" aria-live="polite"></p>
+      </div>
+      <footer class="task-creation-modal__footer">
+        <button class="task-creation-modal__submit" id="routine-creation-submit" type="button">✓ Create Routine</button>
       </footer>
     </div>
   </div>

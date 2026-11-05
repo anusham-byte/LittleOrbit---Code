@@ -5071,8 +5071,372 @@ body.emotion-checkin-open {
   transform: translateY(-2px);
 }
 
+.planner-new-routine {
+  position: absolute;
+  z-index: 4;
+  right: 18px;
+  bottom: 12px;
+  margin: 0;
+}
+
+.planner-new-routine span:first-child {
+  mask-image: url("assets/planner-add.svg");
+  -webkit-mask-image: url("assets/planner-add.svg");
+}
+
+.personal-planner__workspace {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  gap: 18px;
+  padding-bottom: 62px;
+}
+
+.personal-planner__lists {
+  display: flex;
+  min-width: 0;
+  min-height: 156px;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+
+.personal-planner__lists::-webkit-scrollbar {
+  display: none;
+}
+
+.personal-routine-card {
+  position: relative;
+  display: flex;
+  min-width: min(290px, 82vw);
+  flex: 0 0 min(290px, 82vw);
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 2px solid var(--color-muted-accent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--color-sticker) 58%, var(--color-container));
+  box-shadow: 0 8px 18px var(--color-shadow);
+}
+
+.personal-routine-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.personal-routine-card__header h3 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-family: var(--font-family-subheading);
+  font-size: var(--font-size-subheading);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-routine-card__edit {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-left: auto;
+  border: 0;
+  background: currentColor;
+  color: var(--color-tag);
+  cursor: pointer;
+  mask: url("assets/journal-edit.svg") center / contain no-repeat;
+  -webkit-mask: url("assets/journal-edit.svg") center / contain no-repeat;
+}
+
+.personal-routine-card__edit:hover,
+.personal-routine-card__edit:focus-visible {
+  color: var(--color-button);
+}
+
+.personal-routine-card__items {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.personal-routine-item label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-body);
+}
+
+.personal-routine-item input {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  margin: 0;
+  appearance: none;
+  border: 2px solid var(--color-muted-accent);
+  border-radius: 50%;
+  background: var(--color-container);
+  cursor: pointer;
+}
+
+.personal-routine-item input:checked {
+  border-color: var(--color-tag);
+  background: var(--color-tag);
+  box-shadow: inset 0 0 0 4px var(--color-container);
+}
+
+.personal-routine-item input:focus-visible {
+  outline: 3px solid var(--color-tag);
+  outline-offset: 3px;
+}
+
+.personal-routine-item.is-complete span {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.habit-garden-workspace {
+  min-width: 0;
+  min-height: 280px;
+  padding: 16px;
+  border: 4px solid #6E473B;
+  border-radius: 28px;
+  background: #997964;
+  color: var(--color-container);
+}
+
+.habit-garden-workspace__topline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.habit-garden-workspace__topline h2 {
+  margin: 0;
+  color: var(--color-container);
+  font-family: var(--font-family-heading);
+  font-size: clamp(18px, 2.2vw, 28px);
+  line-height: 1;
+}
+
+#streak-animation-container {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  place-items: center;
+  margin-left: -6px;
+  position: relative;
+  z-index: 2;
+}
+
+#streak-animation-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: grayscale(1);
+}
+
+#streak-animation-image:not(.is-active) {
+  mix-blend-mode: screen;
+}
+
+#streak-animation-image.is-active {
+  filter: none;
+}
+
+.habit-garden-grid {
+  display: grid;
+  min-height: 250px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(70px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.habit-garden-plot {
+  position: relative;
+  min-height: 70px;
+  overflow: hidden;
+}
+
+.habit-garden-flower {
+  position: absolute;
+  z-index: 1;
+  bottom: 8px;
+  left: 50%;
+  width: 82px;
+  height: 124px;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 1;
+  transform: translateX(-50%) translateY(100%) scale(0);
+  transform-origin: bottom;
+  transition: transform 650ms cubic-bezier(0.25, 1, 0.5, 1), opacity 650ms ease;
+}
+
+.habit-garden-plot:nth-child(4n + 1) .habit-garden-flower {
+  background-image: url("assets/habit-flower-orange.png");
+}
+
+.habit-garden-plot:nth-child(4n + 2) .habit-garden-flower {
+  background-image: url("assets/habit-flower-yellow.png");
+}
+
+.habit-garden-plot:nth-child(4n + 3) .habit-garden-flower {
+  background-image: url("assets/habit-flower-blue.png");
+}
+
+.habit-garden-plot:nth-child(4n) .habit-garden-flower {
+  background-image: url("assets/habit-flower-pink.png");
+}
+
+.habit-garden-flower[data-stage="1"] {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.habit-garden-flower[data-stage="0"] {
+  opacity: 0;
+}
+
+/* Growth hook: replace the supplied flower assets with final optimized garden artwork when available. */
+
+.routine-day-selector,
+.routine-items-editor {
+  margin: 0 0 17px;
+  padding: 0;
+  border: 0;
+}
+
+.routine-day-selector legend,
+.routine-items-editor legend {
+  margin-bottom: 9px;
+  color: var(--color-text);
+  font: 700 var(--font-size-body)/1.2 var(--font-family-body);
+}
+
+.routine-day-selector__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.routine-day-selector__grid label,
+.routine-today-toggle {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.routine-day-selector__grid input,
+.routine-today-toggle input {
+  accent-color: var(--color-tag);
+}
+
+.routine-today-toggle {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  font-size: var(--font-size-body);
+}
+
+#routine-items-inputs {
+  display: grid;
+  gap: 8px;
+}
+
+.routine-item-input {
+  display: flex;
+  gap: 7px;
+}
+
+.routine-item-input input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.routine-item-remove,
+.routine-add-item {
+  border: 1px solid var(--color-tag);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-tag);
+  cursor: pointer;
+  font: inherit;
+}
+
+.routine-item-remove {
+  width: 34px;
+  flex: 0 0 34px;
+}
+
+.routine-add-item {
+  margin-top: 10px;
+  padding: 7px 12px;
+}
+
+.routine-item-remove:hover,
+.routine-item-remove:focus-visible,
+.routine-add-item:hover,
+.routine-add-item:focus-visible {
+  background: var(--color-tag);
+  color: var(--color-container);
+}
+
+@media (min-width: 861px) {
+  .planner-page-column.is-expanded#personal-planner-column .personal-planner__workspace {
+    grid-template-columns: minmax(260px, 0.85fr) minmax(360px, 1.15fr);
+    align-items: stretch;
+  }
+
+  .planner-page-column.is-expanded#personal-planner-column .personal-planner__lists {
+    min-height: 0;
+    max-height: calc(100vh - 220px);
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .planner-page-column.is-expanded#personal-planner-column .personal-routine-card {
+    min-width: 0;
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .planner-page-column.is-expanded#personal-planner-column .habit-garden-workspace {
+    min-height: 100%;
+  }
+
+  .planner-page-column.is-expanded#personal-planner-column .habit-garden-grid {
+    min-height: 360px;
+    gap: 22px;
+  }
+
+  .planner-page-column.is-expanded#personal-planner-column .habit-garden-flower {
+    width: 112px;
+    height: 168px;
+  }
+}
 .planner-page-column.is-expanded {
   grid-column: 1 / -1;
+}
+
+.planner-page-column.is-hidden {
+  display: none;
 }
 
 .planner-page-column.is-expanded ~ .planner-page-column {
@@ -5274,6 +5638,10 @@ body.emotion-checkin-open {
 
   .planner-page-column.is-expanded ~ .planner-page-column {
     display: block;
+  }
+
+  .planner-page-column.is-hidden {
+    display: none;
   }
 }
 
@@ -7093,28 +7461,55 @@ body.emotion-checkin-open {
   background: var(--color-background);
 }
 
-.planner-personal__streak {
+#workspace-shell .planner-personal__streak {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   flex: 0 0 auto;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
   border: 1px solid var(--color-muted-accent);
   border-radius: 999px;
   background: var(--color-container);
+  color: var(--color-text);
+  font-family: var(--font-family-subheading);
   white-space: nowrap;
 }
 
 #workspace-shell .planner-personal__streak > span {
-  font-size: 8px;
+  color: var(--color-text);
+  font-family: var(--font-family-subheading);
+  font-size: var(--font-size-subheading);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 #workspace-shell .planner-personal__streak strong {
-  font-size: 11px;
+  color: var(--color-text);
+  font-family: var(--font-family-subheading);
+  font-size: var(--font-size-subheading);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1;
+}
+
+#workspace-shell .planner-new-routine {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  z-index: 4;
+  margin: 0;
+}
+
+#workspace-shell .personal-planner__workspace {
+  padding-bottom: 62px;
+}
+
+#workspace-shell #streak-animation-container {
+  width: 52px;
+  height: 52px;
+  flex-basis: 52px;
+  margin-left: -6px;
 }
 
 .planner-personal__progress {
