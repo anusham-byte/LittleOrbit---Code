@@ -499,11 +499,11 @@
               </div>
             </section>
             <div class="workspace-side-widgets__bottom">
-              <button class="workspace-placeholder workspace-placeholder--small workspace-asmr-button" type="button" aria-label="ASMR Hub">
+              <button class="workspace-placeholder workspace-placeholder--small workspace-asmr-button" type="button" data-workspace-page="asmr" aria-label="ASMR Hub">
                 <span class="workspace-asmr-button__icon" aria-hidden="true"></span>
                 <span>ASMR Hub</span>
               </button>
-              <button class="workspace-placeholder workspace-placeholder--small workspace-asmr-button workspace-entry-button" type="button" aria-label="New Entry">
+              <button class="workspace-placeholder workspace-placeholder--small workspace-asmr-button workspace-entry-button" type="button" data-journal-new-entry aria-label="New Entry">
                 <span class="workspace-entry-button__icon" aria-hidden="true"></span>
                 <span>New Entry</span>
               </button>
@@ -601,7 +601,244 @@
           </main>
         </div>
       </section>
-      <section class="workspace-blank-page" id="workspace-wellness" aria-label="Wellness Portal" hidden></section>
+      <section class="workspace-blank-page wellness-portal-page" id="workspace-wellness" aria-label="Wellness Portal" hidden>
+        <div class="wellness-portal">
+          <nav class="wellness-portal__topics" aria-label="Choose what you need support with">
+            <div class="wellness-portal__topic-list">
+              <button class="wellness-topic" type="button" data-wellness-topic="focus" aria-pressed="false" aria-controls="wellness-topic-content">
+                <span class="wellness-topic__image">
+                  <img
+                    src="assets/wellness-focus.png"
+                    data-wellness-focus-image
+                    data-light-src="assets/wellness-focus.png"
+                    data-dark-src="assets/wellness-focus-dark.png"
+                    alt=""
+                    aria-hidden="true"
+                  >
+                </span>
+                <span class="wellness-topic__text">Why can’t I seem to focus?</span>
+              </button>
+              <button class="wellness-topic" type="button" data-wellness-topic="overwhelmed" aria-pressed="false" aria-controls="wellness-topic-content">
+                <span class="wellness-topic__image">
+                  <img src="assets/wellness-overwhelmed.png" alt="" aria-hidden="true">
+                </span>
+                <span class="wellness-topic__text">I feel completely overwhelmed right now.</span>
+              </button>
+              <button class="wellness-topic" type="button" data-wellness-topic="comparison" aria-pressed="false" aria-controls="wellness-topic-content">
+                <span class="wellness-topic__image">
+                  <img src="assets/wellness-comparison.png" alt="" aria-hidden="true">
+                </span>
+                <span class="wellness-topic__text">Everyone else seems to have it all figured out.</span>
+              </button>
+              <button class="wellness-topic" type="button" data-wellness-topic="sleep" aria-pressed="false" aria-controls="wellness-topic-content">
+                <span class="wellness-topic__image">
+                  <img src="assets/wellness-sleep.png" alt="" aria-hidden="true">
+                </span>
+                <span class="wellness-topic__text">I’m constantly exhausted but can’t sleep.</span>
+              </button>
+            </div>
+          </nav>
+
+          <div class="wellness-portal__content" id="wellness-topic-content" aria-live="polite">
+            <section class="wellness-welcome" id="wellness-welcome" aria-label="Welcome to the Wellness Hub">
+              <img
+                src="assets/wellness-welcome.png"
+                data-wellness-welcome-image
+                data-light-src="assets/wellness-welcome.png"
+                data-dark-src="assets/wellness-welcome-dark.png"
+                alt="Welcome to the wellness hub! Let’s go through some tips or find relief from the ASMR Hub."
+              >
+              <p>Pick a topic when you’re ready. There’s no rush.</p>
+            </section>
+
+            <section class="wellness-topic-content" id="wellness-topic-content-panel" aria-labelledby="wellness-topic-title" hidden>
+              <div class="wellness-topic-content__scroll">
+                <h1 id="wellness-topic-title"></h1>
+                <section class="wellness-toolbox" id="wellness-toolbox" aria-label="Wellness activity" hidden>
+                  <div class="wellness-tool wellness-tool--focus" data-wellness-tool="focus" hidden>
+                    <div class="wellness-focus-preview">
+                      <span class="wellness-focus-preview__label" id="wellness-focus-label">POMODORO · FOCUS SESSION</span>
+                      <output class="wellness-focus-preview__clock" id="wellness-focus-clock" aria-live="off">25:00</output>
+                    </div>
+                    <div class="wellness-tool__actions">
+                      <button class="wellness-action-button" type="button" data-wellness-focus-toggle>Start</button>
+                      <button class="wellness-action-button wellness-action-button--secondary" type="button" data-wellness-focus-reset>Reset</button>
+                      <button class="wellness-action-button wellness-action-button--secondary" type="button" data-journal-new-entry>＋ Entry</button>
+                    </div>
+                  </div>
+
+                  <section class="wellness-tool wellness-tool--breathing" data-wellness-tool="breathing" aria-label="Guided breathing exercise" hidden>
+                    <div class="breathing-widget__stage wellness-breathing__stage">
+                      <div class="breathing-widget__ring-box" aria-live="polite">
+                        <div class="breathing-widget__ring" data-wellness-breathing-ring aria-hidden="true"></div>
+                        <div class="breathing-widget__readout">
+                          <p data-wellness-breathing-status>Ready</p>
+                          <span data-wellness-breathing-timer>4</span>
+                        </div>
+                      </div>
+                      <div class="breathing-widget__gif">
+                        <img
+                          class="breathing-widget__gif-art"
+                          src="assets/breathing-unwind.gif"
+                          alt="Meditating rabbit breathing animation"
+                        >
+                        <p>Credits: GIPHY</p>
+                      </div>
+                    </div>
+                    <div class="breathing-widget__controls" aria-label="Breathing exercise controls">
+                      <button type="button" class="breathing-control" data-wellness-breathing-toggle aria-label="Start breathing exercise">
+                        <span class="breathing-control__icon breathing-control__icon--play" data-wellness-breathing-toggle-icon aria-hidden="true"></span>
+                        <span data-wellness-breathing-toggle-label>Play</span>
+                      </button>
+                      <button type="button" class="breathing-control" data-wellness-breathing-reset aria-label="Reset breathing exercise">
+                        <span class="breathing-control__icon breathing-control__icon--reset" aria-hidden="true"></span>
+                        <span>Reset</span>
+                      </button>
+                    </div>
+                  </section>
+
+                  <section class="wellness-tool wellness-tool--sleep" data-wellness-tool="sleep" aria-label="Calming rain audio" hidden>
+                    <span class="wellness-sleep__art" data-wellness-audio-icon aria-hidden="true"></span>
+                    <div class="wellness-sleep__copy">
+                      <strong>Midnight rain</strong>
+                      <span>A soft rain track for winding down.</span>
+                    </div>
+                    <button class="wellness-action-button wellness-audio-toggle" type="button" data-wellness-audio-toggle aria-pressed="false">Play rain</button>
+                    <p class="wellness-audio-status" data-wellness-audio-status role="status" aria-live="polite"></p>
+                    <audio id="wellness-rain-audio" src="assets/wellness-midnight-rain.mp3" loop preload="none"></audio>
+                  </section>
+                </section>
+
+                <section class="wellness-tips" aria-labelledby="wellness-tips-title">
+                  <h2 id="wellness-tips-title">A few things to try</h2>
+                  <ul id="wellness-tip-list"></ul>
+                </section>
+              </div>
+            </section>
+          </div>
+        </div>
+        <a class="wellness-asmr-route workspace-placeholder workspace-placeholder--small workspace-asmr-button" href="#workspace-asmr" data-workspace-page="asmr" aria-label="Go to ASMR Hub">
+          <span class="workspace-asmr-button__icon" aria-hidden="true"></span>
+          <span>ASMR</span>
+        </a>
+      </section>
+      <section class="workspace-blank-page asmr-hub-page" id="workspace-asmr" aria-label="ASMR Hub" hidden>
+        <aside class="asmr-sidebar" aria-label="ASMR object controls">
+          <header class="asmr-sidebar__header">
+            <a class="asmr-back-button" href="#workspace-wellness" data-workspace-page="wellness" aria-label="Back to the Wellness Portal">←</a>
+            <h1>ASMR Hub</h1>
+          </header>
+
+          <div class="asmr-object-list">
+            <section class="asmr-object-card is-active" data-asmr-object-card="slime">
+              <button class="asmr-object-card__toggle" type="button" data-asmr-object="slime" aria-pressed="true" aria-expanded="true" aria-controls="asmr-controls-slime">
+                <span class="asmr-object-card__indicator" data-asmr-indicator aria-hidden="true">✓</span>
+                <span class="asmr-object-card__name">SLIME <span class="asmr-object-card__icon asmr-object-card__icon--slime" aria-hidden="true"></span></span>
+                <img class="asmr-object-card__chevron" src="assets/icon-chevron.svg" data-asmr-chevron alt="" aria-hidden="true">
+              </button>
+              <div class="asmr-object-card__controls" id="asmr-controls-slime" data-asmr-controls="slime">
+                <label class="asmr-control" for="asmr-velocity-slime">
+                  <span class="asmr-control__label">
+                    <span>Ripple Velocity:</span>
+                  </span>
+                  <span class="asmr-control__range-row">
+                    <input id="asmr-velocity-slime" type="range" min="0" max="100" step="1" value="50" data-asmr-velocity>
+                    <output class="asmr-control__value" for="asmr-velocity-slime" data-asmr-velocity-output>50%</output>
+                  </span>
+                </label>
+                <label class="asmr-control" for="asmr-volume-slime">
+                  <span class="asmr-control__label">
+                    <span>Trigger Volume:</span>
+                    <span class="asmr-control__icon asmr-control__icon--volume" data-asmr-volume-icon aria-hidden="true"></span>
+                  </span>
+                  <span class="asmr-control__range-row">
+                    <input id="asmr-volume-slime" type="range" min="0" max="100" step="1" value="100" data-asmr-volume>
+                    <output class="asmr-control__value" for="asmr-volume-slime" data-asmr-volume-output>100%</output>
+                  </span>
+                </label>
+              </div>
+            </section>
+
+            <section class="asmr-object-card" data-asmr-object-card="needoh">
+              <button class="asmr-object-card__toggle" type="button" data-asmr-object="needoh" aria-pressed="false" aria-expanded="false" aria-controls="asmr-controls-needoh">
+                <span class="asmr-object-card__indicator" data-asmr-indicator aria-hidden="true"></span>
+                <span class="asmr-object-card__name">NEEDOH <span class="asmr-object-card__icon asmr-object-card__icon--needoh" aria-hidden="true"></span></span>
+                <img class="asmr-object-card__chevron" src="assets/icon-chevron.svg" data-asmr-chevron alt="" aria-hidden="true">
+              </button>
+              <div class="asmr-object-card__controls" id="asmr-controls-needoh" data-asmr-controls="needoh" hidden>
+                <label class="asmr-control" for="asmr-velocity-needoh">
+                  <span class="asmr-control__label">
+                    <span>Ripple Velocity:</span>
+                  </span>
+                  <span class="asmr-control__range-row">
+                    <input id="asmr-velocity-needoh" type="range" min="0" max="100" step="1" value="50" data-asmr-velocity>
+                    <output class="asmr-control__value" for="asmr-velocity-needoh" data-asmr-velocity-output>50%</output>
+                  </span>
+                </label>
+                <label class="asmr-control" for="asmr-volume-needoh">
+                  <span class="asmr-control__label">
+                    <span>Trigger Volume:</span>
+                    <span class="asmr-control__icon asmr-control__icon--volume" data-asmr-volume-icon aria-hidden="true"></span>
+                  </span>
+                  <span class="asmr-control__range-row">
+                    <input id="asmr-volume-needoh" type="range" min="0" max="100" step="1" value="100" data-asmr-volume>
+                    <output class="asmr-control__value" for="asmr-volume-needoh" data-asmr-volume-output>100%</output>
+                  </span>
+                </label>
+              </div>
+            </section>
+
+            <section class="asmr-object-card" data-asmr-object-card="wax">
+              <button class="asmr-object-card__toggle" type="button" data-asmr-object="wax" aria-pressed="false" aria-expanded="false" aria-controls="asmr-controls-wax">
+                <span class="asmr-object-card__indicator" data-asmr-indicator aria-hidden="true"></span>
+                <span class="asmr-object-card__name">WAX <span class="asmr-object-card__icon asmr-object-card__icon--wax" aria-hidden="true"></span></span>
+                <img class="asmr-object-card__chevron" src="assets/icon-chevron.svg" data-asmr-chevron alt="" aria-hidden="true">
+              </button>
+              <div class="asmr-object-card__controls" id="asmr-controls-wax" data-asmr-controls="wax" hidden>
+                <label class="asmr-control" for="asmr-velocity-wax">
+                  <span class="asmr-control__label">
+                    <span>Ripple Velocity:</span>
+                  </span>
+                  <span class="asmr-control__range-row">
+                    <input id="asmr-velocity-wax" type="range" min="0" max="100" step="1" value="50" data-asmr-velocity>
+                    <output class="asmr-control__value" for="asmr-velocity-wax" data-asmr-velocity-output>50%</output>
+                  </span>
+                </label>
+                <label class="asmr-control" for="asmr-volume-wax">
+                  <span class="asmr-control__label">
+                    <span>Trigger Volume:</span>
+                    <span class="asmr-control__icon asmr-control__icon--volume" data-asmr-volume-icon aria-hidden="true"></span>
+                  </span>
+                  <span class="asmr-control__range-row">
+                    <input id="asmr-volume-wax" type="range" min="0" max="100" step="1" value="100" data-asmr-volume>
+                    <output class="asmr-control__value" for="asmr-volume-wax" data-asmr-volume-output>100%</output>
+                  </span>
+                </label>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <section class="asmr-canvas-workspace" aria-label="ASMR canvas workspace">
+          <canvas id="asmrCanvas" aria-label="Interactive ASMR workspace canvas"></canvas>
+          <p class="asmr-canvas-instruction" data-asmr-instruction aria-live="polite">
+            Move your cursor through the canvas to drag, poke, and deform the dynamic physics blob!
+          </p>
+          <div class="asmr-break-timer" role="group" aria-label="Break timer">
+            <svg class="asmr-break-timer__clock" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v5l3 2"></path>
+            </svg>
+            <button class="asmr-break-timer__display" type="button" data-asmr-timer-edit aria-label="Edit break timer minutes">05:00</button>
+            <input class="asmr-break-timer__input" type="number" min="1" step="1" value="5" data-asmr-timer-input aria-label="Break timer duration in minutes" hidden>
+            <button class="asmr-break-timer__play" type="button" data-asmr-timer-toggle aria-pressed="false">
+              <span data-asmr-timer-play-icon aria-hidden="true">▶</span>
+              <span data-asmr-timer-play-label>Play</span>
+            </button>
+            <button class="asmr-break-timer__reset" type="button" data-asmr-timer-reset aria-label="Reset break timer">R</button>
+          </div>
+        </section>
+      </section>
       <section class="workspace-blank-page" id="workspace-planner" aria-label="Planner" hidden>
         <!-- Task 11: the planner foundation keeps Academic and Personal workspaces balanced for later task-card features. -->
         <div class="planner-page-view" id="planner-page-view">
@@ -635,6 +872,28 @@
               <div class="planner-task-list" id="academic-tasks-list">
                 <p class="planner-task-list__empty">NO TASKS CREATED YET</p>
               </div>
+              <section class="study-focus-tools" aria-label="Study focus tools">
+                <div class="study-focus-tools__quote" aria-label="A little encouragement for your study session">
+                  <img class="study-focus-tools__art study-focus-tools__art--mint" src="assets/focus-quote-mint.png" alt="Your only limit is your mind.">
+                  <img class="study-focus-tools__art study-focus-tools__art--dark" src="assets/focus-quote-dark.png" alt="Soft heart, strong mind, brave soul.">
+                  <img class="study-focus-tools__art study-focus-tools__art--tulip" src="assets/focus-quote-tulip.png" alt="You'll bloom in your own time.">
+                  <img class="study-focus-tools__art study-focus-tools__art--retro" src="assets/focus-quote-retro.png" alt="Trust the process.">
+                  <p class="study-focus-tools__credit">Credits: @baenwies</p>
+                </div>
+                <div class="study-focus-tools__selector">
+                  <div class="study-focus-tools__arc" role="group" aria-label="Choose a study timer">
+                    <button class="study-focus-tools__option" type="button" data-focus-timer-open="pomodoro">
+                      <img src="assets/focus-pomodoro.png" alt="">
+                      <span>Pomodoro</span>
+                    </button>
+                    <button class="study-focus-tools__option" type="button" data-focus-timer-open="52-17">
+                      <img src="assets/focus-52-17.png" alt="">
+                      <span>52/17</span>
+                    </button>
+                  </div>
+                  <p class="study-focus-tools__label">STUDY FOCUS TOOLS:</p>
+                </div>
+              </section>
               <button class="planner-new-deadline" id="academic-task-create-trigger" type="button" aria-label="Create new academic task">
                 <span aria-hidden="true"></span>
                 <span>NEW TASK</span>
@@ -797,6 +1056,38 @@
         <button class="task-creation-modal__submit" id="routine-creation-submit" type="button">✓ Create Routine</button>
       </footer>
     </div>
+  </div>
+
+  <div class="task-creation-modal focus-timer-modal" id="focus-timer-modal" hidden>
+    <section class="task-creation-modal__panel focus-timer-modal__panel" role="dialog" aria-modal="true" aria-labelledby="focus-timer-title">
+      <header class="task-creation-modal__header">
+        <h2 id="focus-timer-title">Study Focus Timer</h2>
+        <button class="workspace-settings__close" id="focus-timer-close" type="button" aria-label="Close and reset timer">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18.3 5.71 17.29 4.7 12 9.99 6.71 4.7 5.7 5.71 10.99 11 5.7 16.29l1.01 1.01L12 12.01l5.29 5.29 1.01-1.01L13.01 11z"></path>
+          </svg>
+        </button>
+      </header>
+      <div class="focus-timer-modal__content">
+        <p class="focus-timer-modal__method" id="focus-timer-method">Pomodoro (25/5)</p>
+        <div class="focus-timer-modal__phase">
+          <span id="focus-timer-phase">Focus Session</span>
+          <span id="focus-timer-round">Round 1/4</span>
+        </div>
+        <output class="focus-timer-modal__clock" id="focus-timer-clock" aria-live="off">25:00</output>
+        <div class="focus-timer-modal__controls">
+          <button class="focus-timer-modal__start" id="focus-timer-start" type="button">Start</button>
+          <button class="focus-timer-modal__reset" id="focus-timer-reset" type="button">Reset</button>
+        </div>
+        <div class="study-focus-tools__quote focus-timer-modal__quote" aria-label="A little encouragement for your study session">
+          <img class="study-focus-tools__art study-focus-tools__art--mint" src="assets/focus-quote-mint.png" alt="Your only limit is your mind.">
+          <img class="study-focus-tools__art study-focus-tools__art--dark" src="assets/focus-quote-dark.png" alt="Soft heart, strong mind, brave soul.">
+          <img class="study-focus-tools__art study-focus-tools__art--tulip" src="assets/focus-quote-tulip.png" alt="You'll bloom in your own time.">
+          <img class="study-focus-tools__art study-focus-tools__art--retro" src="assets/focus-quote-retro.png" alt="Trust the process.">
+          <p class="study-focus-tools__credit">Credits: @baenwies</p>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div class="journal-entry-discard-modal" id="journal-entry-discard-modal" hidden>

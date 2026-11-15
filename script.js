@@ -110,6 +110,18 @@ function applyTheme(theme) {
         : welcomeWord.dataset.mintWelcome;
     welcomeWord.dataset.welcomeTheme = theme;
   }
+  const wellnessFocusImage = document.querySelector("[data-wellness-focus-image]");
+  if (wellnessFocusImage) {
+    wellnessFocusImage.src = isDarkAcademia
+      ? wellnessFocusImage.dataset.darkSrc
+      : wellnessFocusImage.dataset.lightSrc;
+  }
+  const wellnessWelcomeImage = document.querySelector("[data-wellness-welcome-image]");
+  if (wellnessWelcomeImage) {
+    wellnessWelcomeImage.src = isDarkAcademia
+      ? wellnessWelcomeImage.dataset.darkSrc
+      : wellnessWelcomeImage.dataset.lightSrc;
+  }
   settingsThemeOptions.forEach((option) => {
     const isSelected = option.dataset.settingsTheme === theme;
     option.classList.toggle("is-selected", isSelected);
@@ -200,6 +212,7 @@ const workspacePages = {
   journal: document.querySelector("#workspace-journal"),
   "journal-entry": document.querySelector("#journal-entry-canvas"),
   wellness: document.querySelector("#workspace-wellness"),
+  asmr: document.querySelector("#workspace-asmr"),
   planner: document.querySelector("#workspace-planner"),
 };
 const journalBook = document.getElementById("3d-book");
@@ -798,6 +811,10 @@ function setWorkspacePage(pageName) {
   const page = workspacePages[pageName];
   if (!page) return;
 
+  if (pageName !== "wellness") {
+    resetWellnessBreathing();
+    stopWellnessRain();
+  }
   workspaceShell.dataset.page = pageName;
   Object.entries(workspacePages).forEach(([name, element]) => {
     element.hidden = name !== pageName;
@@ -815,6 +832,238 @@ function setWorkspacePage(pageName) {
     console.error("Unable to save the current Little Orbit workspace page.", error);
   }
 }
+
+const asmrObjectInstructions = {
+  slime: "Move your cursor through the canvas to drag, poke, and deform the dynamic physics blob!",
+  needoh: "Click and hold the squishy sphere to compress it, then release for a slow-rise rebound!",
+  wax: "Click across the wax block to fracture the shell with procedural cracks!",
+};
+const asmrObjectCards = [...document.querySelectorAll("[data-asmr-object-card]")];
+const asmrInstruction = document.querySelector("[data-asmr-instruction]");
+const asmrVolumeIconPaths = {
+  muted: "assets/asmr-volume-muted.svg",
+  low: "assets/asmr-volume-low.svg",
+  medium: "assets/asmr-volume-medium.svg",
+  high: "assets/asmr-volume-high.svg",
+};
+const asmrCanvas = document.querySelector("#asmrCanvas");
+let expandedAsmrObject = "slime";
+
+window.activeAsmrObject = "slime";
+window.currentVelocity = 50;
+window.currentVolume = 100;
+
+function renderAsmrAccordions() {
+  asmrObjectCards.forEach((card) => {
+    const objectName = card.dataset.asmrObjectCard;
+    const isActive = objectName === window.activeAsmrObject;
+    const isExpanded = objectName === expandedAsmrObject;
+    const toggle = card.querySelector("[data-asmr-object]");
+    const controls = card.querySelector("[data-asmr-controls]");
+    toggle.setAttribute("aria-pressed", String(isActive));
+    toggle.setAttribute("aria-expanded", String(isExpanded));
+    card.classList.toggle("is-active", isActive);
+    card.querySelector("[data-asmr-indicator]").textContent = isActive ? "✓" : "";
+    controls.hidden = !isExpanded;
+  });
+}
+
+function setAsmrVolumeIcon(icon, value) {
+  const iconPath = value === 0
+    ? asmrVolumeIconPaths.muted
+    : value <= 33
+      ? asmrVolumeIconPaths.low
+      : value <= 66
+        ? asmrVolumeIconPaths.medium
+        : asmrVolumeIconPaths.high;
+  icon.style.maskImage = `url("${iconPath}")`;
+  icon.style.webkitMaskImage = `url("${iconPath}")`;
+}
+
+function updateAsmrObjectParameters(objectName) {
+  const card = document.querySelector(`[data-asmr-object-card="${objectName}"]`);
+  const velocity = Number(card.querySelector("[data-asmr-velocity]").value);
+  const volume = Number(card.querySelector("[data-asmr-volume]").value);
+  window.currentVelocity = velocity;
+  window.currentVolume = volume;
+  card.querySelector("[data-asmr-velocity-output]").value = `${velocity}%`;
+  card.querySelector("[data-asmr-volume-output]").value = `${volume}%`;
+  setAsmrVolumeIcon(card.querySelector("[data-asmr-volume-icon]"), volume);
+}
+
+function initAsmrObject(objectName) {
+  const normalizedName = String(objectName).trim().toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(asmrObjectInstructions, normalizedName)) {
+    throw new RangeError(`Unknown ASMR object: ${objectName}`);
+  }
+  window.activeAsmrObject = normalizedName;
+  expandedAsmrObject = normalizedName;
+  asmrInstruction.textContent = asmrObjectInstructions[normalizedName];
+  updateAsmrObjectParameters(normalizedName);
+  renderAsmrAccordions();
+
+  // Task 15 hook: initialize the selected object's canvas physics here.
+  window.dispatchEvent(new CustomEvent("littleorbit:asmr-object-change", {
+    detail: {
+      objectName: normalizedName,
+      canvas: asmrCanvas,
+      velocity: window.currentVelocity,
+      volume: window.currentVolume,
+    },
+  }));
+}
+
+window.initAsmrObject = initAsmrObject;
+
+asmrObjectCards.forEach((card) => {
+  const toggle = card.querySelector("[data-asmr-object]");
+  toggle.addEventListener("click", () => {
+    const objectName = card.dataset.asmrObjectCard;
+    if (objectName === window.activeAsmrObject && expandedAsmrObject === objectName) {
+      expandedAsmrObject = null;
+      renderAsmrAccordions();
+      return;
+    }
+    window.initAsmrObject(objectName);
+  });
+  card.querySelector("[data-asmr-velocity]").addEventListener("input", (event) => {
+    const value = Number(event.currentTarget.value);
+    card.querySelector("[data-asmr-velocity-output]").value = `${value}%`;
+    if (card.dataset.asmrObjectCard === window.activeAsmrObject) {
+      window.currentVelocity = value;
+      window.dispatchEvent(new CustomEvent("littleorbit:asmr-parameter-change", {
+        detail: { objectName: window.activeAsmrObject, parameter: "velocity", value },
+      }));
+    }
+  });
+  card.querySelector("[data-asmr-volume]").addEventListener("input", (event) => {
+    const value = Number(event.currentTarget.value);
+    card.querySelector("[data-asmr-volume-output]").value = `${value}%`;
+    setAsmrVolumeIcon(card.querySelector("[data-asmr-volume-icon]"), value);
+    if (card.dataset.asmrObjectCard === window.activeAsmrObject) {
+      window.currentVolume = value;
+      window.dispatchEvent(new CustomEvent("littleorbit:asmr-parameter-change", {
+        detail: { objectName: window.activeAsmrObject, parameter: "volume", value },
+      }));
+    }
+  });
+});
+
+const asmrTimerDisplay = document.querySelector("[data-asmr-timer-edit]");
+const asmrTimerInput = document.querySelector("[data-asmr-timer-input]");
+const asmrTimerToggle = document.querySelector("[data-asmr-timer-toggle]");
+const asmrTimerPlayIcon = document.querySelector("[data-asmr-timer-play-icon]");
+const asmrTimerPlayLabel = document.querySelector("[data-asmr-timer-play-label]");
+const asmrTimerState = {
+  durationSeconds: 300,
+  remainingSeconds: 300,
+  intervalId: 0,
+};
+
+function formatAsmrTimer(seconds) {
+  const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const remainder = (seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${remainder}`;
+}
+
+function renderAsmrTimer() {
+  const isRunning = Boolean(asmrTimerState.intervalId);
+  asmrTimerDisplay.textContent = formatAsmrTimer(asmrTimerState.remainingSeconds);
+  asmrTimerToggle.setAttribute("aria-pressed", String(isRunning));
+  asmrTimerToggle.setAttribute("aria-label", isRunning ? "Pause break timer" : "Play break timer");
+  asmrTimerPlayIcon.textContent = isRunning ? "Ⅱ" : "▶";
+  asmrTimerPlayLabel.textContent = isRunning ? "Pause" : "Play";
+}
+
+function closeAsmrTimerEditor() {
+  asmrTimerInput.hidden = true;
+  asmrTimerDisplay.hidden = false;
+  asmrTimerInput.value = String(asmrTimerState.durationSeconds / 60);
+  asmrTimerInput.setCustomValidity("");
+}
+
+function commitAsmrTimerDuration() {
+  if (asmrTimerInput.hidden) return;
+  const minutes = Number(asmrTimerInput.value);
+  const seconds = minutes * 60;
+  if (!Number.isSafeInteger(minutes) || minutes < 1 || !Number.isSafeInteger(seconds)) {
+    asmrTimerInput.setCustomValidity("Enter a positive whole number of minutes.");
+    asmrTimerInput.reportValidity();
+    return;
+  }
+  asmrTimerInput.setCustomValidity("");
+  window.clearInterval(asmrTimerState.intervalId);
+  asmrTimerState.intervalId = 0;
+  asmrTimerState.durationSeconds = seconds;
+  asmrTimerState.remainingSeconds = seconds;
+  closeAsmrTimerEditor();
+  renderAsmrTimer();
+}
+
+asmrTimerDisplay.addEventListener("click", () => {
+  asmrTimerInput.value = String(asmrTimerState.durationSeconds / 60);
+  asmrTimerDisplay.hidden = true;
+  asmrTimerInput.hidden = false;
+  asmrTimerInput.focus();
+  asmrTimerInput.select();
+});
+asmrTimerInput.addEventListener("input", () => asmrTimerInput.setCustomValidity(""));
+asmrTimerInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    commitAsmrTimerDuration();
+  } else if (event.key === "Escape") {
+    closeAsmrTimerEditor();
+  }
+});
+asmrTimerInput.addEventListener("blur", commitAsmrTimerDuration);
+asmrTimerToggle.addEventListener("click", () => {
+  if (asmrTimerState.intervalId) {
+    window.clearInterval(asmrTimerState.intervalId);
+    asmrTimerState.intervalId = 0;
+  } else {
+    if (asmrTimerState.remainingSeconds === 0) {
+      asmrTimerState.remainingSeconds = asmrTimerState.durationSeconds;
+    }
+    asmrTimerState.intervalId = window.setInterval(() => {
+      asmrTimerState.remainingSeconds = Math.max(0, asmrTimerState.remainingSeconds - 1);
+      if (asmrTimerState.remainingSeconds === 0) {
+        window.clearInterval(asmrTimerState.intervalId);
+        asmrTimerState.intervalId = 0;
+      }
+      renderAsmrTimer();
+    }, 1000);
+  }
+  renderAsmrTimer();
+});
+document.querySelector("[data-asmr-timer-reset]").addEventListener("click", () => {
+  window.clearInterval(asmrTimerState.intervalId);
+  asmrTimerState.intervalId = 0;
+  asmrTimerState.remainingSeconds = asmrTimerState.durationSeconds;
+  closeAsmrTimerEditor();
+  renderAsmrTimer();
+});
+
+function resizeAsmrCanvas() {
+  if (!asmrCanvas) return;
+  const bounds = asmrCanvas.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+  const pixelRatio = window.devicePixelRatio || 1;
+  const pixelWidth = Math.round(bounds.width * pixelRatio);
+  const pixelHeight = Math.round(bounds.height * pixelRatio);
+  if (asmrCanvas.width === pixelWidth && asmrCanvas.height === pixelHeight) return;
+  asmrCanvas.width = pixelWidth;
+  asmrCanvas.height = pixelHeight;
+  asmrCanvas.getContext("2d")?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+}
+
+if (asmrCanvas && "ResizeObserver" in window) {
+  new ResizeObserver(resizeAsmrCanvas).observe(asmrCanvas);
+} else {
+  window.addEventListener("resize", resizeAsmrCanvas, { passive: true });
+}
+window.initAsmrObject("slime");
+renderAsmrTimer();
 
 function journalEntriesKey(user = activeUser) {
   return `${journalEntriesStorageKey}:${accountStorageKey(user?.username)}`;
@@ -1208,8 +1457,10 @@ plannerLayoutToggles.forEach((toggle) => {
   toggle.addEventListener("click", () => {
     const column = toggle.closest(".planner-page-column");
     if (!column) return;
+    const columns = column.parentElement;
     const isExpanded = column.classList.toggle("is-expanded");
     if (isExpanded) {
+      columns?.classList.add("has-expanded-column");
       document.querySelectorAll(".planner-page-column").forEach((otherColumn) => {
         if (otherColumn === column) return;
         otherColumn.classList.remove("is-expanded");
@@ -1219,6 +1470,7 @@ plannerLayoutToggles.forEach((toggle) => {
         otherToggle?.setAttribute("aria-label", `Expand ${otherColumn.id === "academic-planner-column" ? "Academic" : "Personal"} Planner`);
       });
     } else {
+      columns?.classList.remove("has-expanded-column");
       document.querySelectorAll(".planner-page-column").forEach((otherColumn) => {
         otherColumn.classList.remove("is-hidden");
       });
@@ -1696,6 +1948,7 @@ function renderPersonalGarden(state = readPersonalGardenState()) {
 
 function triggerFlowerGrowth(completed) {
   if (!habitGardenGrid) return;
+  if (completed && Math.random() >= 0.65) return;
   const state = readPersonalGardenState();
   const stages = state.stages;
   if (completed) {
@@ -1979,6 +2232,385 @@ routineJustToday?.addEventListener("change", () => {
     if (routineJustToday.checked) input.checked = false;
   });
 });
+
+const focusTimerModal = document.querySelector("#focus-timer-modal");
+const focusTimerClose = document.querySelector("#focus-timer-close");
+const focusTimerClock = document.querySelector("#focus-timer-clock");
+const focusTimerPhase = document.querySelector("#focus-timer-phase");
+const focusTimerRound = document.querySelector("#focus-timer-round");
+const focusTimerMethod = document.querySelector("#focus-timer-method");
+const focusTimerStart = document.querySelector("#focus-timer-start");
+const focusTimerReset = document.querySelector("#focus-timer-reset");
+const focusTimerLaunchButtons = [...document.querySelectorAll("[data-focus-timer-open]")];
+const focusTimerConfig = {
+  pomodoro: { work: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 },
+  "52-17": { work: 52 * 60, break: 17 * 60 },
+};
+let focusTimerMode = "pomodoro";
+let focusTimerCurrentPhase = "work";
+let focusTimerCurrentRound = 1;
+let focusTimerRemaining = focusTimerConfig.pomodoro.work;
+let focusTimerInterval = 0;
+
+function formatFocusTimer(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function renderFocusTimer() {
+  if (!focusTimerClock) return;
+  focusTimerClock.textContent = formatFocusTimer(focusTimerRemaining);
+  const wellnessClock = document.querySelector("#wellness-focus-clock");
+  const wellnessLabel = document.querySelector("#wellness-focus-label");
+  const wellnessToggle = document.querySelector("[data-wellness-focus-toggle]");
+  if (wellnessClock) wellnessClock.textContent = formatFocusTimer(focusTimerRemaining);
+  if (wellnessLabel) {
+    const phaseName = focusTimerCurrentPhase === "work"
+      ? "FOCUS SESSION"
+      : focusTimerCurrentPhase === "longBreak"
+        ? "LONG BREAK"
+        : "SHORT BREAK";
+    wellnessLabel.textContent = `POMODORO · ${phaseName}`;
+  }
+  if (wellnessToggle) {
+    wellnessToggle.textContent = focusTimerInterval ? "Pause" : "Start";
+    wellnessToggle.setAttribute("aria-label", focusTimerInterval ? "Pause Pomodoro timer" : "Start Pomodoro timer");
+  }
+  focusTimerPhase.textContent = focusTimerCurrentPhase === "work"
+    ? "Focus Session"
+    : focusTimerCurrentPhase === "longBreak"
+      ? "Long Break"
+      : focusTimerMode === "52-17"
+        ? "Break"
+        : "Short Break";
+  focusTimerRound.textContent = focusTimerMode === "pomodoro"
+    ? `Round ${focusTimerCurrentRound}/4`
+    : `Round ${focusTimerCurrentRound}`;
+  focusTimerMethod.textContent = focusTimerMode === "pomodoro" ? "Pomodoro (25/5)" : "52/17 Method";
+  focusTimerStart.textContent = focusTimerInterval ? "Pause" : "Start";
+  focusTimerStart.setAttribute("aria-label", focusTimerInterval ? "Pause timer" : "Start timer");
+}
+
+function resetFocusTimer(mode = focusTimerMode) {
+  window.clearInterval(focusTimerInterval);
+  focusTimerInterval = 0;
+  focusTimerMode = mode;
+  focusTimerCurrentPhase = "work";
+  focusTimerCurrentRound = 1;
+  focusTimerRemaining = focusTimerConfig[focusTimerMode].work;
+  renderFocusTimer();
+}
+
+function advanceFocusTimerPhase() {
+  const config = focusTimerConfig[focusTimerMode];
+  if (focusTimerMode === "pomodoro") {
+    if (focusTimerCurrentPhase === "work") {
+      if (focusTimerCurrentRound === 4) {
+        focusTimerCurrentPhase = "longBreak";
+        focusTimerRemaining = config.longBreak;
+      } else {
+        focusTimerCurrentPhase = "shortBreak";
+        focusTimerRemaining = config.shortBreak;
+      }
+    } else if (focusTimerCurrentPhase === "longBreak") {
+      focusTimerCurrentPhase = "work";
+      focusTimerCurrentRound = 1;
+      focusTimerRemaining = config.work;
+    } else {
+      focusTimerCurrentPhase = "work";
+      focusTimerCurrentRound += 1;
+      focusTimerRemaining = config.work;
+    }
+  } else if (focusTimerCurrentPhase === "work") {
+    focusTimerCurrentPhase = "shortBreak";
+    focusTimerRemaining = config.break;
+  } else {
+    focusTimerCurrentPhase = "work";
+    focusTimerCurrentRound += 1;
+    focusTimerRemaining = config.work;
+  }
+}
+
+function tickFocusTimer() {
+  if (focusTimerRemaining > 1) {
+    focusTimerRemaining -= 1;
+  } else {
+    // Play chime sound here
+    advanceFocusTimerPhase();
+  }
+  renderFocusTimer();
+}
+
+function openFocusTimer(mode) {
+  resetFocusTimer(mode);
+  focusTimerModal.hidden = false;
+  focusTimerStart.focus();
+}
+
+function closeFocusTimer() {
+  resetFocusTimer(focusTimerMode);
+  focusTimerModal.hidden = true;
+}
+
+focusTimerLaunchButtons.forEach((button) => {
+  button.addEventListener("click", () => openFocusTimer(button.dataset.focusTimerOpen));
+});
+
+function toggleFocusTimer() {
+  if (focusTimerInterval) {
+    window.clearInterval(focusTimerInterval);
+    focusTimerInterval = 0;
+  } else {
+    focusTimerInterval = window.setInterval(tickFocusTimer, 1000);
+  }
+  renderFocusTimer();
+}
+
+focusTimerStart?.addEventListener("click", () => {
+  toggleFocusTimer();
+});
+
+focusTimerReset?.addEventListener("click", () => resetFocusTimer());
+document.querySelector("[data-wellness-focus-toggle]")?.addEventListener("click", () => {
+  if (focusTimerMode !== "pomodoro") resetFocusTimer("pomodoro");
+  toggleFocusTimer();
+});
+document.querySelector("[data-wellness-focus-reset]")?.addEventListener("click", () => resetFocusTimer("pomodoro"));
+focusTimerClose?.addEventListener("click", closeFocusTimer);
+focusTimerModal?.addEventListener("click", (event) => {
+  if (event.target === focusTimerModal) closeFocusTimer();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && focusTimerModal && !focusTimerModal.hidden) closeFocusTimer();
+});
+
+resetFocusTimer();
+
+const wellnessTopicContent = {
+  focus: {
+    title: "Why can’t I seem to focus?",
+    tool: "focus",
+    tips: [
+      { lead: "Do a “brain dump”:", text: " Write down everything stressing you out on a piece of paper to clear mental clutter before you start studying." },
+      { lead: "Use the 20–20–20 rule:", text: " Every 20 minutes, look at something 20 feet away for 20 seconds to reset your eyes and brain." },
+      { lead: "Hide your phone:", text: " Place your phone completely out of sight in another room; just having it on your desk reduces your brain power." },
+      { lead: "Work in blocks:", text: " Study intensely for 25 minutes, then give yourself a strict 5-minute break to stretch or grab a snack." },
+    ],
+  },
+  overwhelmed: {
+    title: "I feel completely overwhelmed right now.",
+    tool: "breathing",
+    tips: [
+      { lead: "Drop your shoulders:", text: " Unclench your jaw, lower your shoulders, and relax the muscles in your face — stress physically locks up your body." },
+      { lead: "Splash cold water:", text: " Splash freezing cold water on your face or hold an ice cube to instantly signal your nervous system to slow down." },
+      { lead: "The 5-4-3-2-1 trick:", text: " Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, and 1 you taste to pull yourself out of your head." },
+      { lead: "Vent it out:", text: " Text a trusted friend or write a private journal entry just to get the heavy emotions out of your body." },
+    ],
+  },
+  comparison: {
+    title: "Everyone else seems to have it all figured out.",
+    tool: "",
+    tips: [
+      { lead: "Check the filter:", text: " Remind yourself that social media is a curated highlight reel of someone’s best 5 seconds, not their actual everyday life." },
+      { lead: "Mute the noise:", text: " Unfollow or mute accounts that make you feel insecure, anxious, or not “good enough” about your life or appearance." },
+      { lead: "Track your own wins:", text: " Write down three small things you did well today, even if it’s just making your bed or making someone laugh." },
+      { lead: "Shift your focus:", text: " Spend 15 minutes doing a hobby you love entirely offline, purely for fun and completely away from peer pressure." },
+    ],
+  },
+  sleep: {
+    title: "I’m constantly exhausted but can’t sleep.",
+    tool: "sleep",
+    tips: [
+      { lead: "Set a digital curfew:", text: " Put your phone on its charger across the room exactly one hour before you want to close your eyes." },
+      { lead: "Dim the lights:", text: " Turn off bright overhead lights an hour before bed and use a dim lamp to tell your brain it’s time to produce melatonin." },
+      { lead: "Keep it cool:", text: " Lower your room temperature slightly if you can; a cooler room naturally triggers your body’s deep sleep response." },
+      { lead: "Listen to a story:", text: " Put on a calming, slow-paced audio track, white noise, or a sleep story to give your mind something boring to focus on." },
+    ],
+  },
+};
+
+const wellnessTopicButtons = [...document.querySelectorAll("[data-wellness-topic]")];
+const wellnessWelcome = document.querySelector("#wellness-welcome");
+const wellnessTopicPanel = document.querySelector("#wellness-topic-content-panel");
+const wellnessTopicTitle = document.querySelector("#wellness-topic-title");
+const wellnessTipList = document.querySelector("#wellness-tip-list");
+const wellnessToolbox = document.querySelector("#wellness-toolbox");
+const wellnessTools = [...document.querySelectorAll("[data-wellness-tool]")];
+
+function stopWellnessRain() {
+  const audio = document.querySelector("#wellness-rain-audio");
+  if (!audio) return;
+  audio.pause();
+  audio.currentTime = 0;
+  document.querySelector("[data-wellness-tool='sleep']")?.setAttribute("data-playing", "false");
+  const toggle = document.querySelector("[data-wellness-audio-toggle]");
+  toggle?.setAttribute("aria-pressed", "false");
+  if (toggle) {
+    toggle.textContent = "Play rain";
+    toggle.dataset.playing = "false";
+  }
+}
+
+function selectWellnessTopic(topicKey) {
+  const topic = wellnessTopicContent[topicKey];
+  if (!topic) return;
+  const activeTopicButton = wellnessTopicButtons.find((button) => button.dataset.wellnessTopic === topicKey);
+  const isAlreadySelected = activeTopicButton?.getAttribute("aria-pressed") === "true";
+
+  if (isAlreadySelected) {
+    wellnessTopicButtons.forEach((button) => {
+      button.classList.remove("is-active");
+      button.setAttribute("aria-pressed", "false");
+    });
+    wellnessTopicPanel.hidden = true;
+    wellnessWelcome.hidden = false;
+    wellnessToolbox.hidden = true;
+    wellnessTipList.replaceChildren();
+    resetWellnessBreathing();
+    stopWellnessRain();
+    return;
+  }
+
+  wellnessTopicButtons.forEach((button) => {
+    const isSelected = button.dataset.wellnessTopic === topicKey;
+    button.classList.toggle("is-active", isSelected);
+    button.setAttribute("aria-pressed", String(isSelected));
+  });
+  wellnessWelcome.hidden = true;
+  wellnessTopicPanel.hidden = false;
+  if (topicKey === "focus" && focusTimerMode !== "pomodoro") resetFocusTimer("pomodoro");
+  wellnessTopicTitle.textContent = topic.title;
+  wellnessTipList.replaceChildren(...topic.tips.map(({ lead, text }) => {
+    const item = document.createElement("li");
+    const emphasis = document.createElement("strong");
+    emphasis.textContent = lead;
+    item.append(emphasis, document.createTextNode(text));
+    return item;
+  }));
+  wellnessToolbox.hidden = !topic.tool;
+  wellnessTools.forEach((tool) => {
+    tool.hidden = tool.dataset.wellnessTool !== topic.tool;
+  });
+  if (topicKey !== "overwhelmed") resetWellnessBreathing();
+  if (topicKey !== "sleep") stopWellnessRain();
+}
+
+wellnessTopicButtons.forEach((button) => {
+  button.addEventListener("click", () => selectWellnessTopic(button.dataset.wellnessTopic));
+});
+
+const wellnessBreathingPhases = [
+  { label: "BREATHE-IN", className: "growing-circle" },
+  { label: "HOLD", className: "breathing-hold" },
+  { label: "BREATHE-OUT", className: "shrinking-circle" },
+  { label: "HOLD", className: "breathing-rest" },
+];
+const wellnessBreathingRing = document.querySelector("[data-wellness-breathing-ring]");
+const wellnessBreathingStatus = document.querySelector("[data-wellness-breathing-status]");
+const wellnessBreathingTimer = document.querySelector("[data-wellness-breathing-timer]");
+const wellnessBreathingToggle = document.querySelector("[data-wellness-breathing-toggle]");
+const wellnessBreathingToggleIcon = document.querySelector("[data-wellness-breathing-toggle-icon]");
+const wellnessBreathingToggleLabel = document.querySelector("[data-wellness-breathing-toggle-label]");
+let wellnessBreathingPhaseIndex = 0;
+let wellnessBreathingSeconds = 4;
+let wellnessBreathingInterval = 0;
+let wellnessBreathingIsPaused = false;
+let wellnessBreathingRenderedClass = "";
+
+function renderWellnessBreathing() {
+  const isActive = Boolean(wellnessBreathingInterval) || wellnessBreathingIsPaused;
+  wellnessBreathingStatus.textContent = isActive
+    ? wellnessBreathingPhases[wellnessBreathingPhaseIndex].label
+    : "Ready";
+  wellnessBreathingTimer.textContent = String(wellnessBreathingSeconds);
+  const isRunning = Boolean(wellnessBreathingInterval);
+  wellnessBreathingToggleLabel.textContent = isRunning ? "Pause" : wellnessBreathingIsPaused ? "Resume" : "Play";
+  wellnessBreathingToggle.setAttribute("aria-pressed", String(Boolean(wellnessBreathingInterval)));
+  wellnessBreathingToggle.setAttribute("aria-label", isRunning ? "Pause breathing exercise" : "Start breathing exercise");
+  wellnessBreathingToggleIcon.classList.toggle("breathing-control__icon--play", !isRunning);
+  wellnessBreathingToggleIcon.classList.toggle("breathing-control__icon--pause", isRunning);
+  if (!wellnessBreathingInterval) {
+    if (wellnessBreathingIsPaused) {
+      wellnessBreathingRing.classList.add("breathing-is-paused");
+      return;
+    }
+    wellnessBreathingRing.classList.remove("growing-circle", "breathing-hold", "shrinking-circle", "breathing-rest", "breathing-is-paused");
+    wellnessBreathingRenderedClass = "";
+    return;
+  }
+  const phaseClass = wellnessBreathingPhases[wellnessBreathingPhaseIndex].className;
+  if (phaseClass !== wellnessBreathingRenderedClass) {
+    wellnessBreathingRing.classList.remove("growing-circle", "breathing-hold", "shrinking-circle", "breathing-rest");
+    wellnessBreathingRing.classList.add(phaseClass);
+    wellnessBreathingRenderedClass = phaseClass;
+  }
+  wellnessBreathingRing.classList.remove("breathing-is-paused");
+}
+
+function resetWellnessBreathing() {
+  window.clearInterval(wellnessBreathingInterval);
+  wellnessBreathingInterval = 0;
+  wellnessBreathingIsPaused = false;
+  wellnessBreathingPhaseIndex = 0;
+  wellnessBreathingSeconds = 4;
+  if (wellnessBreathingRing && wellnessBreathingToggle && wellnessBreathingToggleLabel && wellnessBreathingToggleIcon) {
+    renderWellnessBreathing();
+  }
+}
+
+wellnessBreathingToggle?.addEventListener("click", () => {
+  if (wellnessBreathingInterval) {
+    window.clearInterval(wellnessBreathingInterval);
+    wellnessBreathingInterval = 0;
+    wellnessBreathingIsPaused = true;
+    renderWellnessBreathing();
+    return;
+  }
+  wellnessBreathingIsPaused = false;
+  wellnessBreathingInterval = window.setInterval(() => {
+    wellnessBreathingSeconds -= 1;
+    if (wellnessBreathingSeconds <= 0) {
+      wellnessBreathingPhaseIndex = (wellnessBreathingPhaseIndex + 1) % wellnessBreathingPhases.length;
+      wellnessBreathingSeconds = 4;
+    }
+    renderWellnessBreathing();
+  }, 1000);
+  renderWellnessBreathing();
+});
+document.querySelector("[data-wellness-breathing-reset]")?.addEventListener("click", resetWellnessBreathing);
+
+document.querySelector("[data-wellness-audio-toggle]")?.addEventListener("click", async (event) => {
+  const audio = document.querySelector("#wellness-rain-audio");
+  const status = document.querySelector("[data-wellness-audio-status]");
+  const toggle = event.currentTarget;
+  const tool = toggle.closest("[data-wellness-tool='sleep']");
+  if (!audio.paused) {
+    audio.pause();
+    toggle.textContent = "Play rain";
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.dataset.playing = "false";
+    tool.dataset.playing = "false";
+    status.textContent = "Rain audio paused.";
+    return;
+  }
+  try {
+    await audio.play();
+    toggle.textContent = "Pause rain";
+    toggle.setAttribute("aria-pressed", "true");
+    toggle.dataset.playing = "true";
+    tool.dataset.playing = "true";
+    status.textContent = "Rain audio playing.";
+  } catch (error) {
+    status.textContent = "Rain audio could not start. Check your browser’s audio settings and try again.";
+    toggle.dataset.playing = "false";
+    tool.dataset.playing = "false";
+    console.error("Unable to play the Wellness Portal rain audio.", error);
+  }
+});
+
+resetWellnessBreathing();
 
 // C.1 layout blueprint: the breathing widget runs a paused-by-default 4-4-4 cycle.
 const breathingRing = document.querySelector("#breathing-ring");

@@ -4791,6 +4791,19 @@ body.emotion-checkin-open {
   padding: 0 clamp(14px, 2.5vw, 34px) 28px;
 }
 
+#academic-planner-column {
+  display: flex;
+  max-height: calc(100vh - 60px);
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+#academic-planner-column .planner-column-content {
+  flex: 1 0 auto;
+}
+
 .planner-page-column + .planner-page-column {
   border-left: 1px solid var(--color-line);
 }
@@ -4983,6 +4996,124 @@ body.emotion-checkin-open {
 
 .planner-task-list::-webkit-scrollbar {
   display: none;
+}
+
+.study-focus-tools {
+  display: grid;
+  min-width: 0;
+  min-height: 148px;
+  flex: 0 0 auto;
+  max-width: 480px;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 18px);
+  margin: 4px 0 8px;
+}
+
+.study-focus-tools__quote {
+  position: relative;
+  min-width: 0;
+  width: min(100%, 190px);
+  justify-self: center;
+  overflow: hidden;
+  aspect-ratio: 1.16;
+  border: 2px solid var(--color-sticker);
+  border-radius: 20px;
+  background: var(--color-container);
+  box-shadow: 0 5px 14px var(--color-shadow);
+}
+
+.study-focus-tools__art {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+[data-theme="mint-chocolate"] .study-focus-tools__art--mint,
+[data-theme="dark-academia"] .study-focus-tools__art--dark,
+[data-theme="tulip-pastel"] .study-focus-tools__art--tulip,
+[data-theme="retro-fun"] .study-focus-tools__art--retro {
+  display: block;
+}
+
+.study-focus-tools__credit {
+  display: none;
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  margin: 0;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgb(255 254 245 / 88%);
+  color: #695049;
+  font: 600 9px/1.2 var(--font-family-body);
+}
+
+[data-theme="tulip-pastel"] .study-focus-tools__credit {
+  display: block;
+}
+
+.study-focus-tools__selector {
+  min-width: 0;
+  text-align: center;
+}
+
+.study-focus-tools__arc {
+  display: grid;
+  width: min(100%, 280px);
+  min-height: 104px;
+  margin-inline: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 3px solid var(--color-text);
+  border-bottom-width: 4px;
+  border-radius: 150px 150px 0 0;
+  background: var(--color-sticker);
+}
+
+.study-focus-tools__option {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 6px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: 700 clamp(14px, 1.35vw, 16px)/1.1 var(--font-family-body);
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.study-focus-tools__option + .study-focus-tools__option {
+  border-left: 2px solid var(--color-text);
+}
+
+.study-focus-tools__option img {
+  width: clamp(26px, 2.8vw, 40px);
+  height: clamp(26px, 2.8vw, 40px);
+  object-fit: contain;
+}
+
+.study-focus-tools__option:hover,
+.study-focus-tools__option:focus-visible {
+  background: color-mix(in srgb, var(--color-button) 66%, transparent);
+  transform: translateY(-2px);
+}
+
+.study-focus-tools__label {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  margin: -2px 0 0;
+  padding: 5px 12px;
+  border-radius: 0 0 999px 999px;
+  background: var(--color-text);
+  color: var(--color-container);
+  font: 700 clamp(15px, 1.5vw, 19px)/1.15 var(--font-family-subheading);
 }
 
 .planner-task-list__empty {
@@ -5256,26 +5387,27 @@ body.emotion-checkin-open {
 
 .habit-garden-grid {
   display: grid;
-  min-height: 250px;
+  min-height: 330px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(70px, 1fr));
-  gap: 16px;
+  grid-template-rows: repeat(3, minmax(100px, 1fr));
+  gap: 12px;
   align-items: end;
 }
 
 .habit-garden-plot {
   position: relative;
-  min-height: 70px;
-  overflow: hidden;
+  min-width: 0;
+  min-height: 100px;
+  overflow: visible;
 }
 
 .habit-garden-flower {
   position: absolute;
   z-index: 1;
-  bottom: 8px;
+  bottom: 0;
   left: 50%;
-  width: 82px;
-  height: 124px;
+  width: min(58px, 74%);
+  height: 88px;
   background-position: center bottom;
   background-repeat: no-repeat;
   background-size: contain;
@@ -5311,6 +5443,94 @@ body.emotion-checkin-open {
 }
 
 /* Growth hook: replace the supplied flower assets with final optimized garden artwork when available. */
+
+.focus-timer-modal {
+  z-index: 50;
+}
+
+.focus-timer-modal__panel {
+  position: relative;
+  width: min(500px, 100%);
+  height: auto;
+  max-height: calc(100vh - 40px);
+}
+
+.focus-timer-modal__content {
+  display: grid;
+  gap: 14px;
+  padding: 14px clamp(18px, 5vw, 32px) 20px;
+  color: var(--color-text);
+}
+
+.focus-timer-modal__controls button {
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-tag);
+  border-radius: 999px;
+  background: var(--color-container);
+  color: var(--color-text);
+  cursor: pointer;
+  font: 700 var(--font-size-body)/1.2 var(--font-family-body);
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.focus-timer-modal__controls .focus-timer-modal__start {
+  background: var(--color-tag);
+  color: var(--color-container);
+}
+
+.focus-timer-modal__controls button:hover,
+.focus-timer-modal__controls button:focus-visible {
+  background: var(--color-button);
+  color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+.focus-timer-modal__method {
+  margin: 0;
+  color: var(--color-muted-accent);
+  font: 700 var(--font-size-body)/1.2 var(--font-family-body);
+  text-align: center;
+}
+
+.focus-timer-modal__quote {
+  width: min(160px, 100%);
+  justify-self: center;
+}
+
+.focus-timer-modal__phase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font: 700 var(--font-size-subheading)/1.2 var(--font-family-subheading);
+}
+
+.focus-timer-modal__phase span:first-child {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--color-sticker);
+}
+
+.focus-timer-modal__clock {
+  display: block;
+  color: var(--color-text);
+  font: 700 clamp(64px, 15vw, 112px)/1 var(--font-family-heading);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.focus-timer-modal__controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.focus-timer-modal__controls button {
+  min-width: 124px;
+}
 
 .routine-day-selector,
 .routine-items-editor {
@@ -5422,13 +5642,14 @@ body.emotion-checkin-open {
   }
 
   .planner-page-column.is-expanded#personal-planner-column .habit-garden-grid {
-    min-height: 360px;
+    min-height: 390px;
+    grid-template-rows: repeat(3, minmax(118px, 1fr));
     gap: 22px;
   }
 
   .planner-page-column.is-expanded#personal-planner-column .habit-garden-flower {
-    width: 112px;
-    height: 168px;
+    width: min(72px, 74%);
+    height: 110px;
   }
 }
 .planner-page-column.is-expanded {
@@ -7713,4 +7934,922 @@ p {
 #emotion-checkin .emotion-checkin__question {
   font-family: var(--font-body);
   font-size: var(--font-size-body);
+}
+
+.planner-page-view__columns.has-expanded-column {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.planner-page-view__columns.has-expanded-column > .planner-page-column.is-expanded {
+  grid-column: 1 / -1;
+}
+
+#workspace-shell .planner-page-view__columns.has-expanded-column > .planner-page-column.is-hidden {
+  display: none;
+}
+
+.focus-timer-modal {
+  background: rgb(25 28 28 / 38%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+#focus-timer-modal .focus-timer-modal__panel {
+  width: min(500px, calc(100vw - 32px));
+  height: auto;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+#focus-timer-modal .task-creation-modal__header {
+  padding-right: 72px;
+}
+
+.workspace-shell[data-page="wellness"] .workspace-main,
+.workspace-shell[data-page="asmr"] .workspace-main {
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.wellness-portal-page {
+  position: relative;
+  overflow: hidden;
+}
+
+.wellness-portal {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.wellness-portal__topics {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: clamp(14px, 2.4vh, 24px);
+  padding: clamp(22px, 3vw, 42px) clamp(18px, 3vw, 44px);
+  border-right: 7px solid var(--color-tag);
+  overflow-y: auto;
+}
+
+.wellness-portal__topic-list {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: center;
+  gap: clamp(12px, 2vh, 22px);
+}
+
+.wellness-topic {
+  display: grid;
+  min-width: 0;
+  min-height: clamp(104px, 15vh, 142px);
+  grid-template-columns: clamp(74px, 9vw, 112px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(10px, 2vw, 22px);
+  padding: clamp(10px, 1.4vw, 16px);
+  border: 2px solid var(--color-tag);
+  border-radius: 999px;
+  background: var(--color-button);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: right;
+  transition:
+    background-color 220ms ease,
+    grid-template-columns 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.wellness-topic__image {
+  display: grid;
+  width: clamp(74px, 9vw, 112px);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid var(--color-muted-accent);
+  border-radius: 50%;
+  background: var(--color-container);
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.wellness-topic__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.wellness-topic__text {
+  color: var(--color-text);
+  font: 700 clamp(16px, 1.55vw, 23px)/1.2 var(--font-family-subheading);
+  transition: color 180ms ease, text-align 180ms ease;
+}
+
+.wellness-topic:hover,
+.wellness-topic:focus-visible {
+  box-shadow: 0 9px 22px var(--color-shadow);
+  transform: translateY(-2px);
+}
+
+.wellness-topic:focus-visible {
+  outline: 3px solid var(--color-tag);
+  outline-offset: 3px;
+}
+
+.wellness-topic.is-active {
+  grid-template-columns: minmax(0, 1fr) clamp(74px, 9vw, 112px);
+  background: var(--color-container);
+}
+
+.wellness-topic.is-active .wellness-topic__text {
+  grid-column: 1;
+  grid-row: 1;
+  text-align: left;
+}
+
+.wellness-topic.is-active .wellness-topic__image {
+  grid-column: 2;
+  grid-row: 1;
+  transform: rotate(4deg);
+}
+
+.wellness-portal__content {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  padding: clamp(20px, 3vw, 44px);
+}
+
+.wellness-welcome {
+  display: flex;
+  width: min(100%, 720px);
+  height: min(100%, 760px);
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: clamp(20px, 3vw, 42px);
+  border: 3px solid var(--color-tag);
+  border-radius: clamp(24px, 4vw, 42px);
+  background: var(--color-sticker);
+  text-align: center;
+}
+
+.wellness-welcome img {
+  display: block;
+  width: min(100%, 580px);
+  max-height: min(68%, 580px);
+  object-fit: contain;
+}
+
+.wellness-welcome > p {
+  margin: 0;
+  color: var(--color-text);
+  font: 600 var(--font-size-body)/1.4 var(--font-family-body);
+}
+
+.wellness-topic-content {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.wellness-topic-content__scroll {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 4px 8px 90px 2px;
+  scrollbar-color: var(--color-muted-accent) transparent;
+}
+
+.wellness-topic-content h1 {
+  margin: 0 0 18px;
+  color: var(--color-text);
+  font: 700 clamp(24px, 3vw, 38px)/1.16 var(--font-family-subheading);
+}
+
+.wellness-toolbox {
+  margin-bottom: clamp(20px, 3vh, 32px);
+}
+
+.wellness-tool {
+  display: grid;
+  min-height: 184px;
+  align-content: center;
+  gap: 16px;
+  padding: clamp(16px, 2.5vw, 28px);
+  border: 2px solid var(--color-tag);
+  border-radius: 28px;
+  background: var(--color-sticker);
+  box-shadow: 0 8px 22px var(--color-shadow);
+}
+
+.wellness-tool[hidden],
+.wellness-toolbox[hidden],
+.wellness-welcome[hidden],
+.wellness-topic-content[hidden] {
+  display: none;
+}
+
+.wellness-focus-preview {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  text-align: center;
+}
+
+#workspace-shell .wellness-focus-preview__clock {
+  font: 700 clamp(48px, 7vw, 76px)/1 var(--font-family-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.wellness-focus-preview__label {
+  font: 700 14px/1.2 var(--font-family-subheading);
+  letter-spacing: 0.12em;
+}
+
+.wellness-tool__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.wellness-action-button {
+  min-height: 42px;
+  padding: 9px 17px;
+  border: 1px solid var(--color-tag);
+  border-radius: 999px;
+  background: var(--color-container);
+  color: var(--color-text);
+  cursor: pointer;
+  font: 700 var(--font-size-body)/1.2 var(--font-family-body);
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.wellness-action-button:hover,
+.wellness-action-button:focus-visible {
+  background: var(--color-tag);
+  color: var(--color-container);
+  transform: translateY(-2px);
+}
+
+.wellness-action-button--secondary {
+  background: var(--color-button);
+}
+
+.wellness-tool--breathing {
+  min-height: 320px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.wellness-tool--breathing .breathing-widget__stage {
+  min-height: 204px;
+  flex: 1 1 auto;
+}
+
+.wellness-sleep__copy {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text);
+  font: var(--font-size-body)/1.4 var(--font-family-body);
+}
+
+.wellness-sleep__copy strong {
+  font: 700 var(--font-size-subheading)/1.2 var(--font-family-subheading);
+}
+
+.wellness-tool--breathing .breathing-widget__controls {
+  grid-column: 1 / -1;
+}
+
+.wellness-tool--sleep {
+  grid-template-columns: 66px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 132px;
+}
+
+.wellness-sleep__art {
+  display: block;
+  width: 60px;
+  height: 60px;
+  background-color: var(--color-tag);
+  mask: url("assets/wellness-volume-muted.svg") center / contain no-repeat;
+  -webkit-mask: url("assets/wellness-volume-muted.svg") center / contain no-repeat;
+}
+
+.wellness-tool--sleep[data-playing="true"] .wellness-sleep__art {
+  mask-image: url("assets/wellness-volume-playing.svg");
+  -webkit-mask-image: url("assets/wellness-volume-playing.svg");
+}
+
+.wellness-tool--sleep .wellness-sleep__art {
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.wellness-tool--sleep[data-playing="true"] .wellness-sleep__art {
+  transform: scale(1.05);
+}
+
+.wellness-audio-status {
+  grid-column: 1 / -1;
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--color-muted-accent);
+  font: var(--font-size-small, 14px)/1.3 var(--font-family-body);
+}
+
+.wellness-tips {
+  max-width: 68ch;
+  margin: 0 auto;
+}
+
+.wellness-tips h2 {
+  margin: 0 0 14px;
+  color: var(--color-text);
+  font: 700 var(--font-size-subheading)/1.2 var(--font-family-subheading);
+}
+
+.wellness-tips ul {
+  display: grid;
+  gap: clamp(14px, 2vh, 22px);
+  margin: 0;
+  padding-left: 1.35em;
+  color: var(--color-text);
+  font: var(--font-size-body)/1.55 var(--font-family-body);
+}
+
+.wellness-tips li {
+  padding-left: 4px;
+}
+
+.wellness-tips li::marker {
+  color: var(--color-tag);
+  font-size: 1.2em;
+}
+
+.wellness-tips li strong {
+  font-weight: 700;
+}
+
+#workspace-shell .wellness-asmr-route.workspace-asmr-button {
+  position: fixed;
+  z-index: 1000;
+  right: clamp(16px, 2vw, 30px);
+  bottom: clamp(16px, 2vw, 30px);
+  width: auto !important;
+  min-width: 154px;
+  min-height: 72px;
+  padding: 9px 20px;
+  border-color: var(--color-line);
+  background: var(--color-container);
+  text-decoration: none;
+}
+
+#workspace-shell .wellness-asmr-route.workspace-asmr-button,
+#workspace-shell .wellness-asmr-route.workspace-asmr-button:focus-visible {
+  background-color: var(--color-container);
+}
+
+#workspace-shell .wellness-asmr-route.workspace-asmr-button:hover,
+#workspace-shell .wellness-asmr-route.workspace-asmr-button:focus-visible {
+  background-color: var(--color-tag);
+  color: var(--color-container);
+}
+
+.asmr-hub-page {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  grid-template-columns: minmax(270px, 30%) minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.asmr-sidebar {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: clamp(20px, 3vh, 32px);
+  padding: clamp(18px, 2.4vw, 34px);
+  overflow-y: auto;
+  border-right: 1px solid var(--color-line);
+  background: var(--color-background);
+}
+
+.asmr-sidebar__header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.asmr-back-button {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1.5px solid var(--color-tag);
+  border-radius: 15px;
+  background: var(--color-container);
+  color: var(--color-text);
+  font: 700 30px/1 var(--font-family-body);
+  text-decoration: none;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.asmr-back-button:hover,
+.asmr-back-button:focus-visible {
+  background: var(--color-tag);
+  color: var(--color-container);
+  transform: translateX(-2px);
+}
+
+.asmr-sidebar__header h1 {
+  width: fit-content;
+  margin: 0;
+  color: var(--color-text);
+  font: 700 clamp(24px, 2.4vw, 32px)/1.1 var(--font-family-heading);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.asmr-object-list {
+  display: grid;
+  align-content: start;
+  gap: clamp(14px, 2vh, 22px);
+}
+
+.asmr-object-card {
+  overflow: hidden;
+  border: 1.5px solid var(--color-tag);
+  border-radius: 24px;
+  background: var(--color-button);
+  box-shadow: 0 5px 14px var(--color-shadow);
+}
+
+.asmr-object-card__toggle {
+  display: grid;
+  width: 100%;
+  min-height: 58px;
+  grid-template-columns: 38px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-button);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.asmr-object-card__toggle:hover,
+.asmr-object-card__toggle:focus-visible {
+  background: var(--color-button);
+}
+
+.asmr-object-card__toggle:focus-visible {
+  outline: 3px solid var(--color-tag);
+  outline-offset: -4px;
+}
+
+.asmr-object-card__indicator {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 2px solid var(--color-muted-accent);
+  border-radius: 50%;
+  background: var(--color-container);
+  color: var(--color-tag);
+  font: 700 22px/1 var(--font-family-body);
+}
+
+#workspace-shell .asmr-object-card__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  font-family: var(--font-family-subheading);
+  font-size: var(--font-size-subheading);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+#workspace-shell .asmr-object-card__icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  background-color: var(--color-tag);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.asmr-object-card__icon--slime {
+  mask-image: url("assets/asmr-slime-splotch.svg");
+  -webkit-mask-image: url("assets/asmr-slime-splotch.svg");
+}
+
+.asmr-object-card__icon--needoh {
+  mask-image: url("assets/asmr-needoh-cube.svg");
+  -webkit-mask-image: url("assets/asmr-needoh-cube.svg");
+}
+
+.asmr-object-card__icon--wax {
+  mask-image: url("assets/asmr-wax-cracked-egg.png");
+  -webkit-mask-image: url("assets/asmr-wax-cracked-egg.png");
+}
+
+.asmr-object-card__chevron {
+  display: block;
+  width: 13px;
+  height: 13px;
+  justify-self: center;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(31%) sepia(12%) saturate(1000%) hue-rotate(329deg) brightness(91%) contrast(87%);
+  transition: transform 180ms ease;
+}
+
+.asmr-object-card__toggle[aria-expanded="true"] .asmr-object-card__chevron {
+  transform: rotate(180deg);
+}
+
+.asmr-object-card__controls {
+  display: grid;
+  gap: 16px;
+  padding: 14px 14px 16px;
+}
+
+.asmr-object-card__controls[hidden] {
+  display: none;
+}
+
+.asmr-control {
+  display: grid;
+  gap: 7px;
+  color: var(--color-text);
+  cursor: pointer;
+  font: 600 var(--font-size-body)/1.2 var(--font-family-body);
+}
+
+.asmr-control__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.asmr-control__icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  background-color: var(--color-tag);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.asmr-control__range-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.asmr-control__range-row input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-tag);
+  cursor: pointer;
+}
+
+.asmr-control__range-row input[type="range"]:focus-visible {
+  outline: 2px solid var(--color-tag);
+  outline-offset: 3px;
+}
+
+.asmr-control__value {
+  min-width: 48px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-tag);
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: var(--color-text);
+  font: 600 13px/1.1 var(--font-family-body);
+  text-align: center;
+}
+
+.asmr-canvas-workspace {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-container);
+}
+
+#asmrCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.asmr-canvas-instruction {
+  position: absolute;
+  z-index: 1;
+  top: clamp(16px, 2.4vw, 28px);
+  left: clamp(16px, 2.4vw, 28px);
+  width: min(440px, calc(100% - 360px));
+  margin: 0;
+  padding: 11px 15px;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  background: var(--color-wash);
+  color: var(--color-text);
+  font: 600 var(--font-size-body)/1.45 var(--font-family-body);
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.asmr-break-timer {
+  position: absolute;
+  z-index: 2;
+  top: clamp(12px, 1.8vw, 20px);
+  right: clamp(12px, 1.8vw, 20px);
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px 7px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: var(--color-text);
+  box-shadow: 0 5px 18px var(--color-shadow);
+}
+
+.asmr-break-timer__clock {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  fill: none;
+  stroke: var(--color-tag);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.asmr-break-timer__display,
+.asmr-break-timer__input {
+  min-width: 62px;
+  padding: 5px 3px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font: 700 var(--font-size-body)/1.2 var(--font-family-body);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.asmr-break-timer__display {
+  cursor: pointer;
+}
+
+.asmr-break-timer__display:hover,
+.asmr-break-timer__display:focus-visible {
+  background: var(--color-wash);
+}
+
+.asmr-break-timer__input {
+  width: 68px;
+  border: 1px solid var(--color-tag);
+  background: var(--color-container);
+}
+
+.asmr-break-timer__input[hidden],
+.asmr-break-timer__display[hidden] {
+  display: none;
+}
+
+.asmr-break-timer__play,
+.asmr-break-timer__reset {
+  display: inline-flex;
+  min-height: 35px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-button);
+  color: var(--color-text);
+  cursor: pointer;
+  font: 700 13px/1 var(--font-family-body);
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.asmr-break-timer__reset {
+  width: 35px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--color-container);
+  font-size: 15px;
+}
+
+.asmr-break-timer__play:hover,
+.asmr-break-timer__reset:hover,
+.asmr-break-timer__play:focus-visible,
+.asmr-break-timer__reset:focus-visible {
+  background: var(--color-tag);
+  color: var(--color-container);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+  .workspace-shell[data-page="asmr"] .workspace-main {
+    overflow: visible;
+  }
+
+  .asmr-hub-page {
+    height: auto;
+    min-height: calc(100dvh - 104px);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(58dvh, 1fr);
+    overflow: visible;
+  }
+
+  .asmr-sidebar {
+    max-height: none;
+    padding: 18px;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .asmr-object-list {
+    gap: 12px;
+  }
+
+  .asmr-canvas-workspace {
+    min-height: 58dvh;
+  }
+
+  .asmr-canvas-instruction {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    padding: 9px 12px;
+    font-size: 14px;
+  }
+
+  .asmr-break-timer {
+    top: 92px;
+    right: 12px;
+    min-height: 46px;
+    gap: 6px;
+    padding: 5px 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asmr-back-button,
+  .asmr-object-card__toggle,
+  .asmr-break-timer__play,
+  .asmr-break-timer__reset {
+    transition-duration: 0.01ms;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace-shell[data-page="wellness"] .workspace-main {
+    overflow: visible;
+  }
+
+  .wellness-portal-page {
+    overflow: visible;
+  }
+
+  .wellness-portal {
+    height: auto;
+    min-height: calc(100dvh - 104px);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wellness-portal__topics {
+    gap: 14px;
+    padding: 20px 16px 22px;
+    border-right: 0;
+    border-bottom: 5px solid var(--color-tag);
+  }
+
+  .wellness-portal__topic-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .wellness-topic,
+  .wellness-topic.is-active {
+    min-height: 96px;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+    border-radius: 24px;
+    text-align: left;
+  }
+
+  .wellness-topic__image {
+    width: 58px;
+    border-width: 2px;
+  }
+
+  .wellness-topic__text {
+    font-size: clamp(13px, 2.5vw, 17px);
+    text-align: left;
+  }
+
+  .wellness-topic.is-active {
+    grid-template-columns: minmax(0, 1fr) 58px;
+  }
+
+  .wellness-topic.is-active .wellness-topic__text {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .wellness-topic.is-active .wellness-topic__image {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .wellness-portal__content {
+    min-height: 520px;
+    padding: 20px 16px 90px;
+  }
+
+  .wellness-welcome {
+    min-height: 480px;
+    padding: 22px;
+  }
+
+  .wellness-welcome img {
+    max-height: 360px;
+  }
+}
+
+@media (max-width: 460px) {
+  .wellness-topic,
+  .wellness-topic.is-active {
+    min-height: 82px;
+  }
+
+  .wellness-topic__image {
+    width: 62px;
+  }
+
+  .wellness-topic.is-active {
+    grid-template-columns: minmax(0, 1fr) 62px;
+  }
+
+  .wellness-tool--breathing,
+  .wellness-tool--sleep {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .wellness-tool--sleep .wellness-audio-status {
+    grid-column: auto;
+  }
+
 }
