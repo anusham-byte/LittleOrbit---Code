@@ -229,16 +229,64 @@ const journalEntryDate = document.querySelector("#journal-entry-date");
 const journalEntryTitle = document.querySelector("#journal-entry-title");
 const journalEntrySave = document.querySelector("#journal-entry-save");
 const journalEntryFields = [...document.querySelectorAll("[data-entry-field]")];
+const journalFormatToolbar = document.querySelector("#journal-format-toolbar");
+const journalFontFamilySelect = document.querySelector("#journal-font-family");
+const journalFontSizeSelect = document.querySelector("#journal-font-size");
+const journalColorToggles = [...document.querySelectorAll("[data-journal-color-toggle]")];
+const journalColorPopover = document.querySelector("#journal-color-popover");
+const journalColorSwatches = document.querySelector("[data-journal-color-swatches]");
+const journalCustomColor = document.querySelector("[data-journal-custom-color]");
+const journalColorIndicators = [...document.querySelectorAll("[data-journal-color-indicator]")];
+const journalPenDrawer = document.querySelector("#journal-pen-drawer");
+const journalDrawToolButtons = [...document.querySelectorAll("[data-journal-draw-tool]")];
+const journalBrushSize = document.querySelector("#journal-brush-size");
+const journalBrushSizeValue = document.querySelector("[data-journal-brush-size-value]");
+const journalDrawingCanvas = document.querySelector("#journal-drawing-canvas");
+const journalTypingArea = document.querySelector("#canvas-typing-area");
 const journalEntryDiscardModal = document.querySelector("#journal-entry-discard-modal");
 const journalEntryDiscardCancel = document.querySelector("#journal-entry-discard-cancel");
 const journalEntryDiscardConfirm = document.querySelector("#journal-entry-discard-confirm");
 const journalEntryTools = [...document.querySelectorAll("[data-feature-tool]")];
+const journalEntryToolOrder = ["prompts", "note", "stickers", "image", "pen"];
+const journalEntryToolsContainer = journalEntryTools[0]?.parentElement;
+if (journalEntryToolsContainer) {
+  journalEntryToolOrder.forEach((feature) => {
+    const tool = journalEntryTools.find((entryTool) => entryTool.dataset.featureTool === feature);
+    if (tool) journalEntryToolsContainer.append(tool);
+  });
+}
 const featureExpansionDrawer = document.querySelector("#feature-expansion-drawer");
 const featureExpansionDrawerCollapse = document.querySelector("#feature-expansion-drawer-collapse");
 let isCanvasDirty = false;
 let journalEntryCreatedDate = "";
 let journalEntryEditingId = null;
 let activeJournalFeature = "";
+let savedJournalRange = null;
+let pendingJournalFormat = {};
+let activeJournalColorTarget = "text";
+let journalPenColor = "#000000";
+const journalCustomColorsStorageKey = "littleOrbitJournalCustomColors";
+let journalCustomColors = [];
+try {
+  const storedJournalColors = JSON.parse(localStorage.getItem(journalCustomColorsStorageKey) || "[]");
+  if (Array.isArray(storedJournalColors)) {
+    journalCustomColors = storedJournalColors.filter((color) => typeof color === "string" && window.CSS?.supports("color", color));
+  }
+} catch (error) {
+  console.error("Unable to restore custom journal colors.", error);
+}
+let selectedJournalDrawTool = "pen";
+let journalDrawingStrokes = [];
+let currentJournalStroke = null;
+const journalPreviewDrawingStrokes = new WeakMap();
+const journalPreviewStickyNotes = new WeakMap();
+let stickyNoteSequence = 0;
+let activeStickyNoteInteraction = null;
+let journalDrawingResizeObserver = null;
+const journalFieldTextSnapshots = new WeakMap();
+journalEntryFields.forEach((field) => {
+  journalFieldTextSnapshots.set(field, field.textContent);
+});
 const plannerSubjectSelect = document.querySelector("#planner-subject-select");
 const plannerLayoutToggles = [...document.querySelectorAll(".planner-layout-toggle")];
 const plannerCriteriaButtons = [...document.querySelectorAll(".planner-criteria-filter button")];
@@ -774,6 +822,7 @@ function enterWorkspace(user, { restoreSession = false } = {}) {
   renderJournalEntries(user);
   renderPlannerSubjectOptions(user);
   renderPlannerTasks();
+  renderPersonalRoutines();
   restoreJournalState();
   renderAccountPanel();
   updateMissionLogDate();
@@ -2262,6 +2311,12 @@ window.addEventListener("littleorbit:asmr-object-change", (event) => {
 window.addEventListener("littleorbit:workspace-page-change", (event) => {
   const objectName = event.detail.pageName === "asmr" ? window.activeAsmrObject : "";
   startAsmrCanvasMode(objectName);
+  if (event.detail.pageName === "journal") {
+    window.requestAnimationFrame(resizeJournalDrawingPreviews);
+  }
+  if (event.detail.pageName === "journal-entry") {
+    window.requestAnimationFrame(resizeJournalDrawingCanvas);
+  }
 });
 window.addEventListener("littleorbit:asmr-parameter-change", (event) => {
   if (event.detail.objectName === "slime" && event.detail.parameter === "volume" && slimeAudio) {
@@ -2330,28 +2385,129 @@ function renderJournalEntries(user = activeUser) {
     const page = document.createElement("article");
     page.className = "journal-page journal-page--saved-entry";
     page.dataset.entryId = entry.id;
+    const drawingStrokes = normalizeJournalDrawingStrokes(entry.drawingStrokes);
+    const stickyNotes = normalizeJournalStickyNotes(entry.stickyNotes);
+    const alignmentStyle = (alignment) => ["left", "center", "right", "justify"].includes(alignment)
+      ? ` style="text-align: ${alignment};"`
+      : "";
+    const headingMarkup = typeof entry.headingHtml === "string" && entry.headingHtml
+      ? sanitizeJournalMarkup(entry.headingHtml)
+      : escapeJournalText(entry.heading);
+    const subheadingMarkup = typeof entry.subheadingHtml === "string" && entry.subheadingHtml
+      ? sanitizeJournalMarkup(entry.subheadingHtml)
+      : escapeJournalText(entry.subheading);
     page.innerHTML = `
+      <canvas class="journal-page__drawing" data-journal-page-drawing aria-hidden="true"></canvas>
+      <div class="journal-page__sticky-notes" data-journal-page-sticky-notes aria-label="Saved sticky notes"></div>
       <button class="journal-entry-edit" type="button" data-edit-journal-entry="${escapeJournalText(entry.id)}" aria-label="Edit journal entry">
         <span aria-hidden="true"></span>
       </button>
-      <span class="journal-page__eyebrow">${escapeJournalText(entry.date)}</span>
-      <h2>${escapeJournalText(entry.title || "Untitled entry")}</h2>
-      <h3>${escapeJournalText(entry.heading)}</h3>
-      <h4>${escapeJournalText(entry.subheading)}</h4>
-      <p>${escapeJournalText(entry.body).replace(/\n/g, "<br>")}</p>
+      <button class="journal-entry-delete" type="button" data-delete-journal-entry aria-label="Delete journal entry" title="Delete entry">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" />
+        </svg>
+      </button>
+      <div class="journal-page__entry-meta">
+        <h2>${escapeJournalText(entry.title || "Untitled entry")}</h2>
+        <span class="journal-page__entry-separator" aria-hidden="true">|</span>
+        <time>${escapeJournalText(entry.date)}</time>
+      </div>
+      <h3 class="journal-page__heading"${alignmentStyle(entry.headingAlignment)}>${headingMarkup}</h3>
+      <h4 class="journal-page__subheading"${alignmentStyle(entry.subheadingAlignment)}>${subheadingMarkup}</h4>
+      <div class="journal-page__body"${alignmentStyle(entry.bodyAlignment)}>${typeof entry.bodyHtml === "string" && entry.bodyHtml
+        ? sanitizeJournalMarkup(entry.bodyHtml)
+        : escapeJournalText(entry.body).replace(/\n/g, "<br>")}</div>
     `;
+    journalPreviewDrawingStrokes.set(page.querySelector("[data-journal-page-drawing]"), drawingStrokes);
+    const stickyNotesContainer = page.querySelector("[data-journal-page-sticky-notes]");
+    journalPreviewStickyNotes.set(stickyNotesContainer, stickyNotes);
+    renderJournalStickyNotePreviews(stickyNotesContainer, stickyNotes);
     sheet.append(page);
     newEntrySheet?.before(sheet);
   });
   journalSheets = [...document.querySelectorAll("[data-journal-sheet]")];
   renderJournalPageNumbers();
   journalSheetIndex = Math.min(journalSheetIndex, Math.max(0, journalSheets.length - 1));
+  window.requestAnimationFrame(resizeJournalDrawingPreviews);
+}
+
+function deleteJournalEntry(button) {
+  const page = button.closest(".journal-page--saved-entry");
+  const sheet = page?.closest(".journal-sheet");
+  if (!page || !sheet || sheet.hidden || sheet.dataset.savedEntry !== "true") return;
+  if (page.classList.contains("page-crumple-exit")) return;
+
+  const entryId = page.dataset.entryId;
+  const entries = readJournalEntries();
+  const remainingEntries = entries.filter((entry) => String(entry.id) !== entryId);
+  if (remainingEntries.length === entries.length) return;
+  if (!saveJournalEntries(remainingEntries)) {
+    window.alert("This journal entry could not be deleted from browser storage.");
+    return;
+  }
+
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  page.classList.add("page-crumple-exit");
+  const removedIndex = journalSheets.indexOf(sheet);
+  window.setTimeout(() => {
+    sheet.remove();
+    journalSheets = [...document.querySelectorAll("[data-journal-sheet]")];
+    renderJournalPageNumbers();
+    setJournalSheet(Math.min(removedIndex, journalSheets.length - 1));
+  }, 450);
 }
 
 function escapeJournalText(value) {
   const element = document.createElement("span");
   element.textContent = value || "";
   return element.innerHTML;
+}
+
+function sanitizeJournalMarkup(markup) {
+  const allowedTags = new Set(["b", "strong", "i", "em", "u", "span", "br", "p", "div"]);
+  const colorIsSafe = (value) => window.CSS?.supports("color", value) || false;
+  const parsedMarkup = new DOMParser().parseFromString(markup, "text/html");
+  const sanitizedRoot = document.createElement("div");
+
+  function appendSanitizedNode(parent, node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      parent.append(document.createTextNode(node.textContent || ""));
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tagName = node.tagName.toLowerCase();
+    if (!allowedTags.has(tagName)) {
+      node.childNodes.forEach((child) => appendSanitizedNode(parent, child));
+      return;
+    }
+
+    const safeElement = document.createElement(tagName);
+    const fontFamily = node.style.fontFamily.split(",")[0].trim().replace(/^["']|["']$/g, "");
+    if (typographyOptions.heading.includes(fontFamily)
+      || typographyOptions.subheading.includes(fontFamily)
+      || typographyOptions.body.includes(fontFamily)) {
+      safeElement.style.fontFamily = `"${fontFamily}", cursive`;
+    }
+
+    const fontSize = node.style.fontSize.match(/^(\d+(?:\.\d+)?)px$/);
+    if (fontSize && [16, 22, 32].includes(Number(fontSize[1]))) {
+      safeElement.style.fontSize = `${Number(fontSize[1])}px`;
+    }
+    if (colorIsSafe(node.style.color)) {
+      safeElement.style.color = node.style.color;
+    }
+    if (["left", "center", "right", "justify"].includes(node.style.textAlign)) {
+      safeElement.style.textAlign = node.style.textAlign;
+    }
+
+    node.childNodes.forEach((child) => appendSanitizedNode(safeElement, child));
+    parent.append(safeElement);
+  }
+
+  parsedMarkup.body.childNodes.forEach((node) => appendSanitizedNode(sanitizedRoot, node));
+  return sanitizedRoot.innerHTML;
 }
 
 function setCanvasCreatedDate() {
@@ -2364,13 +2520,485 @@ function setCanvasCreatedDate() {
   journalEntryDate.textContent = journalEntryCreatedDate;
 }
 
+function clampJournalCanvasValue(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function normalizeJournalDrawingStrokes(strokes) {
+  if (!Array.isArray(strokes)) return [];
+  const allowedTools = ["pen", "highlighter", "crayon", "eraser"];
+  return strokes.flatMap((stroke) => {
+    if (!stroke || !allowedTools.includes(stroke.tool) || !Array.isArray(stroke.points)) return [];
+    const points = stroke.points
+      .filter((point) => Number.isFinite(point?.x) && Number.isFinite(point?.y))
+      .map((point) => ({
+        x: clampJournalCanvasValue(point.x, 0, 1),
+        y: clampJournalCanvasValue(point.y, 0, 1),
+      }));
+    if (!points.length) return [];
+    return [{
+      tool: stroke.tool,
+      color: typeof stroke.color === "string" && window.CSS?.supports("color", stroke.color)
+        ? stroke.color
+        : "#000000",
+      size: clampJournalCanvasValue(Number(stroke.size) || 4, 1, 50),
+      points,
+    }];
+  });
+}
+
+function normalizeJournalStickyNotes(notes) {
+  if (!Array.isArray(notes)) return [];
+  const toFiniteNumber = (value, fallback) => (
+    Number.isFinite(Number(value)) ? Number(value) : fallback
+  );
+  return notes.flatMap((note) => {
+    if (!note || typeof note !== "object") return [];
+    const width = clampJournalCanvasValue(toFiniteNumber(note.width, 0.18), 0.06, 0.95);
+    const height = clampJournalCanvasValue(toFiniteNumber(note.height, 0.16), 0.05, 0.95);
+    return [{
+      text: typeof note.text === "string" ? note.text : "",
+      x: clampJournalCanvasValue(toFiniteNumber(note.x, 0.03), 0, 1 - width),
+      y: clampJournalCanvasValue(toFiniteNumber(note.y, 0.06), 0, 1 - height),
+      width,
+      height,
+      fontScale: clampJournalCanvasValue(toFiniteNumber(note.fontScale, 0.014), 0.005, 0.08),
+      rotation: clampJournalCanvasValue(toFiniteNumber(note.rotation, 0), -3600, 3600),
+    }];
+  });
+}
+
+function renderJournalStickyNotePreviews(container, notes) {
+  if (!container) return;
+  container.replaceChildren();
+  notes.forEach((noteData) => {
+    const note = document.createElement("article");
+    note.className = "journal-sticky-note journal-sticky-note--preview";
+    note.setAttribute("role", "note");
+    note.setAttribute("aria-label", "Sticky note");
+    note.style.left = `${noteData.x * 100}%`;
+    note.style.top = `${noteData.y * 100}%`;
+    note.style.width = `${noteData.width * 100}%`;
+    note.style.height = `${noteData.height * 100}%`;
+    note.style.transform = `rotate(${noteData.rotation}deg)`;
+
+    const text = document.createElement("div");
+    text.className = "journal-sticky-note__text";
+    text.dataset.placeholder = "Write a note...";
+    text.textContent = noteData.text;
+    note.append(text);
+    container.append(note);
+  });
+}
+
+function resizeJournalDrawingLayer(canvas, strokes) {
+  if (!canvas) return;
+  const bounds = canvas.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+  const pixelRatio = window.devicePixelRatio || 1;
+  const width = Math.round(bounds.width * pixelRatio);
+  const height = Math.round(bounds.height * pixelRatio);
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    console.error("Unable to create the journal drawing canvas context.");
+    return;
+  }
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  context.clearRect(0, 0, bounds.width, bounds.height);
+  strokes.forEach((stroke) => drawJournalStroke(context, stroke, bounds.width, bounds.height));
+}
+
+function resizeJournalDrawingCanvas() {
+  resizeJournalDrawingLayer(journalDrawingCanvas, journalDrawingStrokes);
+}
+
+function resizeJournalDrawingPreviews() {
+  journalPages?.querySelectorAll("[data-journal-page-drawing]").forEach((canvas) => {
+    resizeJournalDrawingLayer(canvas, journalPreviewDrawingStrokes.get(canvas) || []);
+  });
+  journalPages?.querySelectorAll("[data-journal-page-sticky-notes]").forEach((container) => {
+    const bounds = container.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+    (journalPreviewStickyNotes.get(container) || []).forEach((noteData, index) => {
+      const note = container.children[index];
+      if (!note) return;
+      note.style.left = `${noteData.x * bounds.width}px`;
+      note.style.top = `${noteData.y * bounds.height}px`;
+      note.style.width = `${noteData.width * bounds.width}px`;
+      note.style.height = `${noteData.height * bounds.height}px`;
+      note.style.fontSize = `${Math.max(8, noteData.fontScale * bounds.width)}px`;
+    });
+  });
+}
+
+function drawJournalStroke(context, stroke, width, height) {
+  const points = stroke.points.map((point) => ({ x: point.x * width, y: point.y * height }));
+  if (!points.length) return;
+  context.save();
+  context.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
+  context.globalAlpha = stroke.tool === "highlighter" ? 0.35 : stroke.tool === "crayon" ? 0.78 : 1;
+  context.strokeStyle = stroke.color;
+  context.fillStyle = stroke.color;
+  const lineWidth = stroke.tool === "highlighter" ? Math.max(stroke.size * 3, 5) : stroke.size;
+  context.lineWidth = lineWidth;
+  context.lineCap = stroke.tool === "crayon" ? "butt" : "round";
+  context.lineJoin = "round";
+
+  if (points.length === 1) {
+    context.beginPath();
+    context.arc(points[0].x, points[0].y, Math.max(lineWidth / 2, 0.5), 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+    return;
+  }
+
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+  if (stroke.tool === "crayon") {
+    context.setLineDash([Math.max(1, stroke.size * 0.28), Math.max(1, stroke.size * 0.16)]);
+    context.lineWidth = Math.max(1, stroke.size * 0.82);
+  }
+  context.stroke();
+  context.setLineDash([]);
+
+  if (stroke.tool === "crayon") {
+    context.globalAlpha = 0.28;
+    points.slice(1).forEach((point, index) => {
+      const previous = points[index];
+      const distance = Math.hypot(point.x - previous.x, point.y - previous.y);
+      const steps = Math.max(1, Math.ceil(distance / Math.max(2, stroke.size * 0.45)));
+      for (let step = 0; step < steps; step += 1) {
+        const progress = step / steps;
+        const seed = Math.sin((index + 1) * 47.17 + step * 91.73) * 43758.5453;
+        const random = seed - Math.floor(seed);
+        if (random < 0.48) continue;
+        const x = previous.x + (point.x - previous.x) * progress;
+        const y = previous.y + (point.y - previous.y) * progress;
+        const radius = Math.max(0.45, stroke.size * 0.045);
+        context.beginPath();
+        context.arc(
+          x + (random - 0.5) * stroke.size,
+          y + (0.5 - random) * stroke.size,
+          radius,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+      }
+    });
+  }
+  context.restore();
+}
+
+function redrawJournalDrawingStrokes() {
+  if (!journalDrawingCanvas) return;
+  resizeJournalDrawingLayer(journalDrawingCanvas, journalDrawingStrokes);
+}
+
+function beginJournalDrawingStroke(event) {
+  if (!journalTypingArea?.classList.contains("is-drawing") || !journalDrawingCanvas) return;
+  const bounds = journalDrawingCanvas.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+  currentJournalStroke = {
+    tool: selectedJournalDrawTool,
+    color: journalPenColor,
+    size: Number(journalBrushSize?.value) || 4,
+    points: [{
+      x: clampJournalCanvasValue((event.clientX - bounds.left) / bounds.width, 0, 1),
+      y: clampJournalCanvasValue((event.clientY - bounds.top) / bounds.height, 0, 1),
+    }],
+  };
+  journalDrawingStrokes.push(currentJournalStroke);
+  journalDrawingCanvas.setPointerCapture(event.pointerId);
+  redrawJournalDrawingStrokes();
+  event.preventDefault();
+}
+
+function continueJournalDrawingStroke(event) {
+  if (!currentJournalStroke || !journalDrawingCanvas) return;
+  const bounds = journalDrawingCanvas.getBoundingClientRect();
+  currentJournalStroke.points.push({
+    x: clampJournalCanvasValue((event.clientX - bounds.left) / bounds.width, 0, 1),
+    y: clampJournalCanvasValue((event.clientY - bounds.top) / bounds.height, 0, 1),
+  });
+  redrawJournalDrawingStrokes();
+  isCanvasDirty = true;
+}
+
+function endJournalDrawingStroke() {
+  if (!currentJournalStroke) return;
+  currentJournalStroke = null;
+  isCanvasDirty = true;
+}
+
+function setJournalDrawTool(toolName) {
+  selectedJournalDrawTool = toolName;
+  journalDrawToolButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.journalDrawTool === toolName));
+  });
+}
+
+function activateJournalDrawingMode() {
+  journalPenDrawer?.classList.remove("drawer-collapsed");
+  journalPenDrawer?.setAttribute("aria-hidden", "false");
+  journalTypingArea?.classList.add("is-drawing");
+  journalDrawingCanvas?.setAttribute("aria-hidden", "false");
+  resizeJournalDrawingCanvas();
+}
+
+function deactivateJournalDrawingMode() {
+  journalPenDrawer?.classList.add("drawer-collapsed");
+  journalPenDrawer?.setAttribute("aria-hidden", "true");
+  journalTypingArea?.classList.remove("is-drawing");
+  journalDrawingCanvas?.setAttribute("aria-hidden", "true");
+  currentJournalStroke = null;
+}
+
+function spawnJournalStickyNote(noteData = null, { focus = true, markDirty = true } = {}) {
+  if (!journalTypingArea) return;
+  const note = document.createElement("article");
+  note.className = "journal-sticky-note";
+  note.dataset.stickyNoteId = `sticky-${Date.now()}-${stickyNoteSequence}`;
+  const areaWidth = Math.max(1, journalTypingArea.clientWidth);
+  const areaHeight = Math.max(1, journalTypingArea.clientHeight);
+  const width = noteData ? Math.max(132, noteData.width * areaWidth) : 210;
+  const height = noteData ? Math.max(110, noteData.height * areaHeight) : 170;
+  const offset = (stickyNoteSequence % 7) * 18;
+  const maxLeft = Math.max(0, areaWidth - width);
+  const maxTop = Math.max(0, areaHeight - height);
+  note.style.left = `${noteData
+    ? clampJournalCanvasValue(noteData.x * areaWidth, 0, maxLeft)
+    : Math.min(28 + offset, Math.max(8, maxLeft))}px`;
+  note.style.top = `${noteData
+    ? clampJournalCanvasValue(noteData.y * areaHeight, 0, maxTop)
+    : Math.min(74 + offset, Math.max(8, maxTop))}px`;
+  note.style.width = `${width}px`;
+  note.style.height = `${height}px`;
+  note.style.fontSize = `${noteData ? Math.max(8, noteData.fontScale * areaWidth) : 16}px`;
+  note.dataset.rotation = String(noteData?.rotation || 0);
+  if (noteData?.rotation) note.style.transform = `rotate(${noteData.rotation}deg)`;
+  stickyNoteSequence += 1;
+
+  const grab = document.createElement("div");
+  grab.className = "journal-sticky-note__grab";
+  grab.innerHTML = "<span>Sticky note</span><span aria-hidden=\"true\">⠿</span>";
+
+  const text = document.createElement("div");
+  text.className = "journal-sticky-note__text";
+  text.contentEditable = "true";
+  text.setAttribute("role", "textbox");
+  text.setAttribute("aria-label", "Sticky note text");
+  text.setAttribute("data-placeholder", "Write a note...");
+  text.setAttribute("data-sticky-note-text", "");
+  text.textContent = noteData?.text || "";
+  text.addEventListener("input", () => {
+    isCanvasDirty = true;
+  });
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "journal-sticky-note__control journal-sticky-note__delete";
+  deleteButton.type = "button";
+  deleteButton.dataset.stickyNoteAction = "delete";
+  deleteButton.setAttribute("aria-label", "Delete sticky note");
+  deleteButton.textContent = "×";
+  deleteButton.addEventListener("click", () => {
+    note.remove();
+    isCanvasDirty = true;
+  });
+
+  const rotateButton = document.createElement("button");
+  rotateButton.className = "journal-sticky-note__control journal-sticky-note__rotate";
+  rotateButton.type = "button";
+  rotateButton.dataset.stickyNoteAction = "rotate";
+  rotateButton.setAttribute("aria-label", "Rotate sticky note");
+  rotateButton.textContent = "⟳";
+
+  const resizeButton = document.createElement("button");
+  resizeButton.className = "journal-sticky-note__control journal-sticky-note__resize";
+  resizeButton.type = "button";
+  resizeButton.dataset.stickyNoteAction = "resize";
+  resizeButton.setAttribute("aria-label", "Resize sticky note");
+  resizeButton.textContent = "↘";
+
+  note.append(grab, text, deleteButton, rotateButton, resizeButton);
+  note.addEventListener("pointerdown", (event) => {
+    const action = event.target.closest("[data-sticky-note-action]")?.dataset.stickyNoteAction;
+    if (action === "delete") return;
+    event.stopPropagation();
+    note.classList.add("is-selected");
+    journalTypingArea.querySelectorAll(".journal-sticky-note").forEach((otherNote) => {
+      if (otherNote !== note) otherNote.classList.remove("is-selected");
+    });
+    if (event.target.closest("[data-sticky-note-action]")) {
+      event.preventDefault();
+      const rect = note.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      activeStickyNoteInteraction = {
+        type: action,
+        note,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startLeft: Number.parseFloat(note.style.left) || 0,
+        startTop: Number.parseFloat(note.style.top) || 0,
+        startWidth: note.offsetWidth,
+        startHeight: note.offsetHeight,
+        startFontSize: Number.parseFloat(note.style.fontSize) || 16,
+        centerX,
+        centerY,
+        startPointerAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX),
+        startRotation: Number(note.dataset.rotation) || 0,
+      };
+      note.setPointerCapture(event.pointerId);
+      return;
+    }
+    if (event.target.closest("[contenteditable='true']")) return;
+    event.preventDefault();
+    activeStickyNoteInteraction = {
+      type: "drag",
+      note,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: Number.parseFloat(note.style.left) || 0,
+      startTop: Number.parseFloat(note.style.top) || 0,
+    };
+    note.setPointerCapture(event.pointerId);
+  });
+
+  journalTypingArea.append(note);
+  if (focus) text.focus();
+  if (markDirty) isCanvasDirty = true;
+}
+
+function restoreJournalStickyNotes(notes) {
+  normalizeJournalStickyNotes(notes).forEach((noteData) => {
+    spawnJournalStickyNote(noteData, { focus: false, markDirty: false });
+  });
+  isCanvasDirty = false;
+}
+
+function serializeJournalStickyNotes() {
+  if (!journalTypingArea) return [];
+  const bounds = journalTypingArea.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return [];
+  return [...journalTypingArea.querySelectorAll(".journal-sticky-note")].map((note) => ({
+    text: note.querySelector(".journal-sticky-note__text")?.innerText || "",
+    x: (Number.parseFloat(note.style.left) || 0) / bounds.width,
+    y: (Number.parseFloat(note.style.top) || 0) / bounds.height,
+    width: note.offsetWidth / bounds.width,
+    height: note.offsetHeight / bounds.height,
+    fontScale: (Number.parseFloat(note.style.fontSize) || 16) / bounds.width,
+    rotation: Number(note.dataset.rotation) || 0,
+  }));
+}
+
+function moveJournalStickyNote(event) {
+  const interaction = activeStickyNoteInteraction;
+  if (!interaction || interaction.pointerId !== event.pointerId) return;
+  const { note } = interaction;
+  const dx = event.clientX - interaction.startX;
+  const dy = event.clientY - interaction.startY;
+  if (interaction.type === "drag") {
+    const maxLeft = Math.max(0, journalTypingArea.clientWidth - note.offsetWidth);
+    const maxTop = Math.max(0, journalTypingArea.clientHeight - note.offsetHeight);
+    note.style.left = `${clampJournalCanvasValue(interaction.startLeft + dx, 0, maxLeft)}px`;
+    note.style.top = `${clampJournalCanvasValue(interaction.startTop + dy, 0, maxTop)}px`;
+  } else if (interaction.type === "resize") {
+    const maxWidth = Math.max(132, journalTypingArea.clientWidth - interaction.startLeft);
+    const maxHeight = Math.max(110, journalTypingArea.clientHeight - interaction.startTop);
+    let scale = clampJournalCanvasValue(
+      (interaction.startWidth + dx) / interaction.startWidth,
+      132 / interaction.startWidth,
+      maxWidth / interaction.startWidth,
+    );
+    scale = Math.min(scale, maxHeight / interaction.startHeight);
+    note.style.width = `${interaction.startWidth * scale}px`;
+    note.style.height = `${interaction.startHeight * scale}px`;
+    note.style.fontSize = `${interaction.startFontSize * scale}px`;
+  } else if (interaction.type === "rotate") {
+    const pointerAngle = Math.atan2(event.clientY - interaction.centerY, event.clientX - interaction.centerX);
+    const rotation = interaction.startRotation + (pointerAngle - interaction.startPointerAngle) * (180 / Math.PI);
+    note.dataset.rotation = String(rotation);
+    note.style.transform = `rotate(${rotation}deg)`;
+  }
+  isCanvasDirty = true;
+}
+
+function endJournalStickyNoteInteraction(event) {
+  if (!activeStickyNoteInteraction || activeStickyNoteInteraction.pointerId !== event.pointerId) return;
+  activeStickyNoteInteraction = null;
+}
+
+function clearJournalCanvasTools() {
+  deactivateJournalDrawingMode();
+  journalPenDrawer?.classList.add("drawer-collapsed");
+  journalPenDrawer?.setAttribute("aria-hidden", "true");
+  activeJournalFeature = "";
+  featureExpansionDrawer?.classList.add("drawer-collapsed");
+  featureExpansionDrawer?.setAttribute("aria-hidden", "true");
+  journalEntryTools.forEach((tool) => tool.setAttribute("aria-pressed", "false"));
+  journalTypingArea?.querySelectorAll(".journal-sticky-note").forEach((note) => note.remove());
+  journalDrawingStrokes = [];
+  currentJournalStroke = null;
+  activeStickyNoteInteraction = null;
+  stickyNoteSequence = 0;
+  if (journalDrawingCanvas) {
+    const context = journalDrawingCanvas.getContext("2d");
+    context?.clearRect(0, 0, journalDrawingCanvas.width, journalDrawingCanvas.height);
+  }
+  setJournalDrawTool("pen");
+  closeJournalColorPopover();
+}
+
+if (journalDrawingCanvas) {
+  journalDrawingCanvas.addEventListener("pointerdown", beginJournalDrawingStroke);
+  journalDrawingCanvas.addEventListener("pointermove", continueJournalDrawingStroke);
+  journalDrawingCanvas.addEventListener("pointerup", endJournalDrawingStroke);
+  journalDrawingCanvas.addEventListener("pointercancel", endJournalDrawingStroke);
+  if ("ResizeObserver" in window) {
+    journalDrawingResizeObserver = new ResizeObserver(resizeJournalDrawingCanvas);
+    journalDrawingResizeObserver.observe(journalTypingArea);
+  } else {
+    window.addEventListener("resize", resizeJournalDrawingCanvas, { passive: true });
+  }
+}
+window.addEventListener("resize", resizeJournalDrawingPreviews, { passive: true });
+
+document.addEventListener("pointermove", moveJournalStickyNote);
+document.addEventListener("pointerup", endJournalStickyNoteInteraction);
+document.addEventListener("pointercancel", endJournalStickyNoteInteraction);
+document.addEventListener("pointerdown", (event) => {
+  if (event.target.closest(".journal-sticky-note")) return;
+  journalTypingArea?.querySelectorAll(".journal-sticky-note.is-selected").forEach((note) => {
+    note.classList.remove("is-selected");
+  });
+});
+
 function resetJournalEntryCanvas(entry = null) {
   setCanvasCreatedDate();
+  clearJournalCanvasTools();
+  journalDrawingStrokes = normalizeJournalDrawingStrokes(entry?.drawingStrokes);
   journalEntryEditingId = entry?.id || null;
   if (journalEntryTitle) journalEntryTitle.value = entry?.title || "";
   journalEntryFields.forEach((field) => {
-    field.textContent = entry?.[field.dataset.entryField] || "";
+    const fieldName = field.dataset.entryField;
+    const htmlFieldName = `${fieldName}Html`;
+    if (typeof entry?.[htmlFieldName] === "string" && entry[htmlFieldName]) {
+      field.innerHTML = sanitizeJournalMarkup(entry[htmlFieldName]);
+    } else {
+      field.textContent = entry?.[fieldName] || "";
+    }
+    const alignment = entry?.[`${fieldName}Alignment`];
+    field.style.textAlign = ["left", "center", "right", "justify"].includes(alignment) ? alignment : "";
+    journalFieldTextSnapshots.set(field, field.textContent);
   });
+  savedJournalRange = null;
+  hideJournalFormatToolbar();
   isCanvasDirty = false;
 }
 
@@ -2385,6 +3013,7 @@ function editJournalEntry(entryId) {
   if (!entry) return;
   resetJournalEntryCanvas(entry);
   setWorkspacePage("journal-entry");
+  restoreJournalStickyNotes(entry.stickyNotes);
   journalEntryTitle?.focus();
 }
 
@@ -2403,13 +3032,29 @@ function closeJournalEntryCanvas({ discard = false } = {}) {
 }
 
 function saveJournalEntry() {
+  endJournalDrawingStroke();
+  const getField = (fieldName) => journalEntryFields.find((field) => field.dataset.entryField === fieldName);
+  const headingField = getField("heading");
+  const subheadingField = getField("subheading");
+  const bodyField = getField("body");
+  const getAlignment = (field) => ["left", "center", "right", "justify"].includes(field?.style.textAlign)
+    ? field.style.textAlign
+    : "";
   const entry = {
     id: journalEntryEditingId || `entry-${Date.now()}`,
     date: journalEntryCreatedDate || new Date().toLocaleDateString("en-GB"),
     title: journalEntryTitle?.value.trim() || "",
-    heading: journalEntryFields.find((field) => field.dataset.entryField === "heading")?.textContent.trim() || "",
-    subheading: journalEntryFields.find((field) => field.dataset.entryField === "subheading")?.textContent.trim() || "",
-    body: journalEntryFields.find((field) => field.dataset.entryField === "body")?.textContent.trim() || "",
+    heading: headingField?.textContent.trim() || "",
+    headingHtml: sanitizeJournalMarkup(headingField?.innerHTML || ""),
+    headingAlignment: getAlignment(headingField),
+    subheading: subheadingField?.textContent.trim() || "",
+    subheadingHtml: sanitizeJournalMarkup(subheadingField?.innerHTML || ""),
+    subheadingAlignment: getAlignment(subheadingField),
+    body: bodyField?.innerText.trim() || bodyField?.textContent.trim() || "",
+    bodyHtml: sanitizeJournalMarkup(bodyField?.innerHTML || ""),
+    bodyAlignment: getAlignment(bodyField),
+    drawingStrokes: normalizeJournalDrawingStrokes(journalDrawingStrokes),
+    stickyNotes: normalizeJournalStickyNotes(serializeJournalStickyNotes()),
   };
   const entries = readJournalEntries();
   const existingIndex = entries.findIndex((savedEntry) => savedEntry.id === entry.id);
@@ -2430,7 +3075,458 @@ function saveJournalEntry() {
   if (journalFrontCover && !journalFrontCover.classList.contains("open-book")) {
     toggleJournalBook();
   }
-  setJournalSheet(journalSheets.length - 1);
+  const savedEntryIndex = journalSheets.findIndex((sheet) => (
+    sheet.querySelector(".journal-page--saved-entry")?.dataset.entryId === entry.id
+  ));
+  setJournalSheet(savedEntryIndex);
+}
+
+function getJournalFieldForNode(node) {
+  if (!node) return null;
+  return journalEntryFields.find((field) => field === node || field.contains(node)) || null;
+}
+
+function getJournalSelectionRange() {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return null;
+  const range = selection.getRangeAt(0);
+  return getJournalFieldForNode(range.commonAncestorContainer) ? range : null;
+}
+
+function saveJournalEditorSelection() {
+  const range = getJournalSelectionRange();
+  if (range) savedJournalRange = range.cloneRange();
+  return range;
+}
+
+function restoreJournalEditorSelection() {
+  if (!savedJournalRange) return null;
+  const field = getJournalFieldForNode(savedJournalRange.commonAncestorContainer);
+  if (!field) return null;
+  field.focus({ preventScroll: true });
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(savedJournalRange);
+  return field;
+}
+
+function getJournalRangeOffsets(field, range) {
+  const prefix = range.cloneRange();
+  prefix.selectNodeContents(field);
+  prefix.setEnd(range.startContainer, range.startOffset);
+  const start = prefix.toString().length;
+  return { start, end: start + range.toString().length };
+}
+
+function restoreJournalRangeOffsets(field, offsets) {
+  const textNodes = [];
+  const walker = document.createTreeWalker(field, window.NodeFilter.SHOW_TEXT);
+  let textNode = walker.nextNode();
+  while (textNode) {
+    textNodes.push(textNode);
+    textNode = walker.nextNode();
+  }
+
+  function getBoundary(offset) {
+    let remaining = Math.max(0, offset);
+    for (const node of textNodes) {
+      if (remaining <= node.length) return [node, remaining];
+      remaining -= node.length;
+    }
+    const lastNode = textNodes[textNodes.length - 1];
+    return lastNode ? [lastNode, lastNode.length] : [field, 0];
+  }
+
+  const range = document.createRange();
+  const [startNode, startOffset] = getBoundary(offsets.start);
+  const [endNode, endOffset] = getBoundary(offsets.end);
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function showJournalFormatToolbar() {
+  if (!journalFormatToolbar) return;
+  journalFormatToolbar.classList.add("is-visible");
+  journalFormatToolbar.setAttribute("aria-hidden", "false");
+  updateJournalFormatToolbar();
+}
+
+function hideJournalFormatToolbar() {
+  if (!journalFormatToolbar) return;
+  journalFormatToolbar.classList.remove("is-visible");
+  journalFormatToolbar.setAttribute("aria-hidden", "true");
+  closeJournalColorPopover();
+}
+
+function normalizeJournalFontElements() {
+  const legacySizes = {
+    1: "10px",
+    2: "13px",
+    3: "16px",
+    4: "18px",
+    5: "22px",
+    6: "28px",
+    7: "32px",
+  };
+  journalEntryFields.forEach((field) => {
+    field.querySelectorAll("font").forEach((fontElement) => {
+      const span = document.createElement("span");
+      const fontFamily = (fontElement.getAttribute("face") || "").split(",")[0].trim().replace(/^["']|["']$/g, "");
+      if (Object.values(typographyOptions).some((fonts) => fonts.includes(fontFamily))) {
+        span.style.fontFamily = `"${fontFamily}", cursive`;
+      }
+
+      const fontSize = fontElement.style.fontSize || legacySizes[fontElement.getAttribute("size")];
+      if (fontSize && [16, 22, 32].includes(Number.parseFloat(fontSize))) {
+        span.style.fontSize = `${Number.parseFloat(fontSize)}px`;
+      }
+
+      const color = fontElement.getAttribute("color") || fontElement.style.color;
+      if (color && window.CSS?.supports("color", color)) span.style.color = color;
+
+      while (fontElement.firstChild) span.append(fontElement.firstChild);
+      fontElement.replaceWith(span);
+    });
+  });
+}
+
+function normalizeJournalFontSizes() {
+  const legacySizes = {
+    medium: "16px",
+    "x-large": "22px",
+    "xxx-large": "32px",
+  };
+  journalEntryFields.forEach((field) => {
+    [field, ...field.querySelectorAll("[style]")].forEach((element) => {
+      const fontSize = element.style.fontSize.toLowerCase();
+      if (legacySizes[fontSize]) element.style.fontSize = legacySizes[fontSize];
+    });
+  });
+}
+
+function updateJournalFormatToolbar({ preserveTextStyle = false } = {}) {
+  if (!journalFormatToolbar) return;
+  const range = getJournalSelectionRange() || savedJournalRange;
+  const field = range && getJournalFieldForNode(range.commonAncestorContainer);
+  if (!field) return;
+
+  const selectedNode = range.startContainer.nodeType === Node.ELEMENT_NODE
+    ? range.startContainer
+    : range.startContainer.parentElement;
+  const formatElement = selectedNode?.closest("[style]") || selectedNode || field;
+  const computedStyle = window.getComputedStyle(formatElement);
+  const fontSize = Number.parseFloat(computedStyle.fontSize);
+  const fontFamily = computedStyle.fontFamily.split(",")[0].trim().replace(/^["']|["']$/g, "");
+  const keepPendingTextStyle = range.collapsed && Object.keys(pendingJournalFormat).length > 0;
+  if (pendingJournalFormat.color && keepPendingTextStyle) {
+    setJournalColorIndicator(pendingJournalFormat.color, "text");
+  } else if (!preserveTextStyle && !keepPendingTextStyle) {
+    setJournalColorIndicator(computedStyle.color, "text");
+  }
+  if (pendingJournalFormat.fontSize && keepPendingTextStyle) {
+    journalFontSizeSelect.value = pendingJournalFormat.fontSize;
+  } else if (!preserveTextStyle && !keepPendingTextStyle && [16, 22, 32].includes(fontSize)) {
+    journalFontSizeSelect.value = String(fontSize);
+  }
+  if (pendingJournalFormat.fontFamily && keepPendingTextStyle) {
+    journalFontFamilySelect.value = pendingJournalFormat.fontFamily;
+  } else if (!preserveTextStyle && !keepPendingTextStyle && Object.values(typographyOptions).some((fonts) => fonts.includes(fontFamily))) {
+    journalFontFamilySelect.value = fontFamily;
+  }
+
+  journalFormatToolbar.querySelectorAll("[data-journal-command]").forEach((button) => {
+    const alignments = {
+      justifyLeft: "left",
+      justifyCenter: "center",
+      justifyRight: "right",
+      justifyFull: "justify",
+    };
+    const command = button.dataset.journalCommand;
+    let active = document.queryCommandState(command);
+    if (alignments[command]) {
+      let alignmentBlock = selectedNode;
+      while (alignmentBlock && alignmentBlock !== field
+        && !["DIV", "P", "LI", "BLOCKQUOTE"].includes(alignmentBlock.tagName)) {
+        alignmentBlock = alignmentBlock.parentElement;
+      }
+      const currentAlignment = window.getComputedStyle(alignmentBlock || field).textAlign;
+      const normalizedAlignment = currentAlignment === "start" ? "left" : currentAlignment;
+      active = normalizedAlignment === alignments[command];
+    }
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function applyJournalAlignmentAtCaret(field, offsets, alignment) {
+  const selection = window.getSelection();
+  const selectionNode = selection.anchorNode?.nodeType === Node.ELEMENT_NODE
+    ? selection.anchorNode
+    : selection.anchorNode?.parentElement;
+  let block = selectionNode;
+  while (block && block !== field && !["DIV", "P", "LI", "BLOCKQUOTE"].includes(block.tagName)) {
+    block = block.parentElement;
+  }
+
+  if (!block || block === field) {
+    if (!field.textContent) {
+      field.style.textAlign = alignment;
+      return;
+    }
+    block = document.createElement("div");
+    while (field.firstChild) block.append(field.firstChild);
+    field.append(block);
+  }
+  block.style.textAlign = alignment;
+
+  if (!field.textContent) {
+    const range = document.createRange();
+    range.setStart(block, 0);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } else {
+    restoreJournalRangeOffsets(field, offsets);
+  }
+}
+
+function reapplyPendingJournalInputStyle() {
+  const pendingStyles = { ...pendingJournalFormat };
+  const legacySizes = { 16: "3", 22: "5", 32: "7" };
+  const hasPendingStyle = pendingStyles.fontSize
+    || pendingStyles.fontFamily
+    || pendingStyles.color;
+  if (!hasPendingStyle) return;
+
+  document.execCommand("styleWithCSS", false, true);
+  if (pendingStyles.fontSize) {
+    document.execCommand("fontSize", false, legacySizes[pendingStyles.fontSize]);
+  }
+  if (pendingStyles.fontFamily) {
+    document.execCommand("fontName", false, pendingStyles.fontFamily);
+  }
+  if (pendingStyles.color) {
+    document.execCommand("foreColor", false, pendingStyles.color);
+  }
+  pendingJournalFormat = pendingStyles;
+}
+
+function createJournalFormatRun(content) {
+  const signature = JSON.stringify({
+    fontSize: pendingJournalFormat.fontSize,
+    fontFamily: pendingJournalFormat.fontFamily,
+    color: pendingJournalFormat.color,
+  });
+  const formattedSpan = document.createElement("span");
+  formattedSpan.dataset.journalFormatRun = signature;
+  const fontSize = Number(pendingJournalFormat.fontSize);
+  if ([16, 22, 32].includes(fontSize)) formattedSpan.style.fontSize = `${fontSize}px`;
+  const fontFamily = pendingJournalFormat.fontFamily;
+  if (Object.values(typographyOptions).some((fonts) => fonts.includes(fontFamily))) {
+    formattedSpan.style.fontFamily = `"${fontFamily}", cursive`;
+  }
+  const color = pendingJournalFormat.color;
+  if (color && window.CSS?.supports("color", color)) formattedSpan.style.color = color;
+  formattedSpan.append(content);
+  return formattedSpan;
+}
+
+function insertJournalTextWithPendingFormat(field, text) {
+  const range = getJournalSelectionRange();
+  if (!range?.collapsed || !text || !Object.keys(pendingJournalFormat).length) return false;
+
+  const selection = window.getSelection();
+  const signature = JSON.stringify({
+    fontSize: pendingJournalFormat.fontSize,
+    fontFamily: pendingJournalFormat.fontFamily,
+    color: pendingJournalFormat.color,
+  });
+  const currentNode = range.startContainer.nodeType === Node.ELEMENT_NODE
+    ? range.startContainer
+    : range.startContainer.parentElement;
+  const currentRun = currentNode?.closest("[data-journal-format-run]");
+  const textNode = document.createTextNode(text);
+
+  if (currentRun && field.contains(currentRun) && currentRun.dataset.journalFormatRun === signature) {
+    range.insertNode(textNode);
+  } else {
+    range.insertNode(createJournalFormatRun(textNode));
+  }
+
+  const caret = document.createRange();
+  caret.setStart(textNode, textNode.length);
+  caret.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caret);
+  saveJournalEditorSelection();
+  journalFieldTextSnapshots.set(field, field.textContent);
+  isCanvasDirty = true;
+  updateJournalFormatToolbar({ preserveTextStyle: true });
+  return true;
+}
+
+function applyPendingJournalFormatToTextRange(field, start, end) {
+  if (end <= start || !Object.keys(pendingJournalFormat).length) return false;
+  restoreJournalRangeOffsets(field, { start, end });
+  const selection = window.getSelection();
+  const selectedRange = selection.getRangeAt(0);
+  const formattedSpan = createJournalFormatRun(selectedRange.extractContents());
+  selectedRange.insertNode(formattedSpan);
+
+  const textWalker = document.createTreeWalker(formattedSpan, window.NodeFilter.SHOW_TEXT);
+  let lastTextNode = textWalker.nextNode();
+  let nextTextNode = textWalker.nextNode();
+  while (nextTextNode) {
+    lastTextNode = nextTextNode;
+    nextTextNode = textWalker.nextNode();
+  }
+  if (!lastTextNode) return false;
+
+  const caret = document.createRange();
+  caret.setStart(lastTextNode, lastTextNode.length);
+  caret.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caret);
+  journalFieldTextSnapshots.set(field, field.textContent);
+  return true;
+}
+
+function findJournalTextChange(previousText, currentText) {
+  let start = 0;
+  while (start < previousText.length && start < currentText.length
+    && previousText[start] === currentText[start]) {
+    start += 1;
+  }
+
+  let previousEnd = previousText.length;
+  let currentEnd = currentText.length;
+  while (previousEnd > start && currentEnd > start
+    && previousText[previousEnd - 1] === currentText[currentEnd - 1]) {
+    previousEnd -= 1;
+    currentEnd -= 1;
+  }
+
+  return { start, insertedText: currentText.slice(start, currentEnd) };
+}
+
+function applyJournalFormatCommand(command, value = null) {
+  const currentRange = getJournalSelectionRange();
+  if (currentRange) savedJournalRange = currentRange.cloneRange();
+  const rangeToFormat = currentRange || savedJournalRange;
+  const field = rangeToFormat && getJournalFieldForNode(rangeToFormat.commonAncestorContainer);
+  const selectionOffsets = field ? getJournalRangeOffsets(field, rangeToFormat) : null;
+  const isCollapsedSelection = selectionOffsets?.start === selectionOffsets?.end;
+  const editor = restoreJournalEditorSelection();
+  if (!editor) return;
+  const alignments = {
+    justifyLeft: "left",
+    justifyCenter: "center",
+    justifyRight: "right",
+    justifyFull: "justify",
+  };
+  if (isCollapsedSelection && field && alignments[command]) {
+    applyJournalAlignmentAtCaret(field, selectionOffsets, alignments[command]);
+    reapplyPendingJournalInputStyle();
+    saveJournalEditorSelection();
+    isCanvasDirty = true;
+    updateJournalFormatToolbar({ preserveTextStyle: Object.keys(pendingJournalFormat).length > 0 });
+    return;
+  }
+
+  const useInlineStyles = ["fontSize", "fontName", "foreColor"].includes(command);
+  document.execCommand("styleWithCSS", false, useInlineStyles);
+  const applied = document.execCommand(command, false, value);
+  if (!applied) {
+    console.error(`Unable to apply the journal formatting command "${command}".`);
+    return;
+  }
+
+  normalizeJournalFontElements();
+  normalizeJournalFontSizes();
+  if (field && selectionOffsets && !isCollapsedSelection) {
+    restoreJournalRangeOffsets(field, selectionOffsets);
+  }
+  saveJournalEditorSelection();
+  if (isCollapsedSelection) {
+    if (command === "fontSize") {
+      pendingJournalFormat.fontSize = { 3: "16", 5: "22", 7: "32" }[value];
+    } else if (command === "fontName") {
+      pendingJournalFormat.fontFamily = value;
+    } else if (command === "foreColor") {
+      pendingJournalFormat.color = value;
+    }
+  } else {
+    pendingJournalFormat = {};
+  }
+  isCanvasDirty = true;
+  updateJournalFormatToolbar({ preserveTextStyle: isCollapsedSelection });
+}
+
+function createJournalColorPalette() {
+  if (!journalColorSwatches) return;
+  const colors = [
+    "#000000", "#434343", "#666666", "#999999", "#b7b7b7", "#d9d9d9", "#ffffff",
+    "#e6b8af", "#f4cccc", "#fce5cd", "#fff2cc", "#d9ead3", "#d0e0e3", "#cfe2f3",
+    "#d9d2e9", "#ead1dc", "#cc0000", "#e69138", "#f1c232", "#6aa84f", "#45818e",
+    "#3c78d8", "#674ea7", "#a64d79", "#990000", "#b45f06", "#bf9000", "#38761d",
+    "#134f5c", "#1155cc", "#351c75", "#741b47", "#ff0000", "#ff9900", "#ffff00",
+    "#00ff00", "#00ffff", "#0000ff", "#ff00ff",
+  ];
+
+  journalColorSwatches.replaceChildren();
+  [...new Set([...colors, ...journalCustomColors])].forEach((color) => {
+    const swatch = document.createElement("button");
+    swatch.className = "journal-format-color-swatch";
+    swatch.type = "button";
+    swatch.dataset.journalColor = color;
+    swatch.style.setProperty("--journal-swatch-color", color);
+    swatch.setAttribute("aria-label", `Choose color ${color}`);
+    swatch.title = color;
+    journalColorSwatches.append(swatch);
+  });
+}
+
+function closeJournalColorPopover() {
+  if (!journalColorPopover) return;
+  journalColorPopover.hidden = true;
+  journalColorToggles.forEach((toggle) => toggle.setAttribute("aria-expanded", "false"));
+}
+
+function setJournalColorIndicator(color, target = "text") {
+  const indicator = journalColorIndicators.find((entry) => entry.dataset.journalColorIndicator === target);
+  if (indicator) indicator.style.backgroundColor = color;
+  if (target === "pen") journalPenColor = color;
+}
+
+function openJournalColorPopover(toggle) {
+  if (!journalColorPopover || !toggle) return;
+  if (!journalColorPopover.hidden
+    && activeJournalColorTarget === toggle.dataset.journalColorTarget) {
+    closeJournalColorPopover();
+    return;
+  }
+  activeJournalColorTarget = toggle.dataset.journalColorTarget || "text";
+  journalColorPopover.hidden = false;
+  journalColorToggles.forEach((entryToggle) => {
+    entryToggle.setAttribute("aria-expanded", String(entryToggle === toggle));
+  });
+  const toggleRect = toggle.getBoundingClientRect();
+  const popoverRect = journalColorPopover.getBoundingClientRect();
+  const left = clampJournalCanvasValue(toggleRect.left, 8, window.innerWidth - popoverRect.width - 8);
+  const top = toggleRect.bottom + popoverRect.height + 8 <= window.innerHeight
+    ? toggleRect.bottom + 8
+    : Math.max(8, toggleRect.top - popoverRect.height - 8);
+  journalColorPopover.style.left = `${left}px`;
+  journalColorPopover.style.top = `${top}px`;
+}
+
+createJournalColorPalette();
+if (journalFontFamilySelect) {
+  journalFontFamilySelect.value = typographyOptions.body.includes(savedTypography.body)
+    ? savedTypography.body
+    : typographyDefaults.body;
 }
 
 function toggleJournalBook() {
@@ -2485,6 +3581,7 @@ function setJournalSheet(index) {
   });
   journalSheets[journalSheetIndex].classList.add(`is-turning-${direction}`);
   saveJournalState();
+  window.requestAnimationFrame(resizeJournalDrawingPreviews);
 }
 
 function saveJournalState() {
@@ -2604,9 +3701,135 @@ journalEntryTitle?.addEventListener("input", () => {
 });
 
 journalEntryFields.forEach((field) => {
-  field.addEventListener("input", () => {
-    isCanvasDirty = true;
+  field.addEventListener("beforeinput", (event) => {
+    if (event.inputType === "insertText"
+      && insertJournalTextWithPendingFormat(field, event.data)) {
+      event.preventDefault();
+    }
   });
+  field.addEventListener("paste", (event) => {
+    const text = event.clipboardData?.getData("text/plain");
+    if (text && insertJournalTextWithPendingFormat(field, text)) {
+      event.preventDefault();
+    }
+  });
+  field.addEventListener("focus", () => {
+    saveJournalEditorSelection();
+    showJournalFormatToolbar();
+  });
+  field.addEventListener("keyup", () => {
+    const range = saveJournalEditorSelection();
+    if (range?.collapsed) reapplyPendingJournalInputStyle();
+    else pendingJournalFormat = {};
+    updateJournalFormatToolbar();
+  });
+  field.addEventListener("mouseup", () => {
+    const range = saveJournalEditorSelection();
+    if (range?.collapsed) reapplyPendingJournalInputStyle();
+    else pendingJournalFormat = {};
+    updateJournalFormatToolbar();
+  });
+  field.addEventListener("input", (event) => {
+    const pendingStyles = { ...pendingJournalFormat };
+    const previousText = journalFieldTextSnapshots.get(field) ?? "";
+    normalizeJournalFontElements();
+    normalizeJournalFontSizes();
+    const { start, insertedText } = findJournalTextChange(previousText, field.textContent);
+    const isTextInsertion = event.inputType?.startsWith("insert");
+    const formattedRecentInput = isTextInsertion && insertedText
+      ? applyPendingJournalFormatToTextRange(field, start, start + insertedText.length)
+      : false;
+    pendingJournalFormat = formattedRecentInput ? pendingStyles : {};
+    journalFieldTextSnapshots.set(field, field.textContent);
+    saveJournalEditorSelection();
+    isCanvasDirty = true;
+    updateJournalFormatToolbar();
+  });
+});
+
+journalFormatToolbar?.addEventListener("mousedown", (event) => {
+  saveJournalEditorSelection();
+  if (!event.target.closest("select, input[type='color']")) event.preventDefault();
+});
+
+journalFormatToolbar?.addEventListener("click", (event) => {
+  const commandButton = event.target.closest("[data-journal-command]");
+  if (commandButton) {
+    applyJournalFormatCommand(commandButton.dataset.journalCommand);
+  }
+});
+
+journalFontFamilySelect?.addEventListener("change", () => {
+  applyJournalFormatCommand("fontName", journalFontFamilySelect.value);
+});
+
+journalFontSizeSelect?.addEventListener("change", () => {
+  const legacySize = { 32: "7", 22: "5", 16: "3" }[journalFontSizeSelect.value];
+  applyJournalFormatCommand("fontSize", legacySize);
+});
+
+journalColorToggles.forEach((toggle) => {
+  toggle.addEventListener("click", () => openJournalColorPopover(toggle));
+});
+
+journalColorPopover?.addEventListener("mousedown", (event) => {
+  if (activeJournalColorTarget === "text") saveJournalEditorSelection();
+  if (!event.target.closest("input[type='color']")) event.preventDefault();
+});
+
+journalColorPopover?.addEventListener("click", (event) => {
+  const colorSwatch = event.target.closest("[data-journal-color]");
+  if (!colorSwatch) return;
+  const color = colorSwatch.dataset.journalColor;
+  setJournalColorIndicator(color, activeJournalColorTarget);
+  if (journalCustomColor) journalCustomColor.value = color;
+  if (activeJournalColorTarget === "text") applyJournalFormatCommand("foreColor", color);
+  closeJournalColorPopover();
+});
+
+journalCustomColor?.addEventListener("input", () => {
+  setJournalColorIndicator(journalCustomColor.value, activeJournalColorTarget);
+});
+
+journalCustomColor?.addEventListener("change", () => {
+  const color = journalCustomColor.value.toLowerCase();
+  setJournalColorIndicator(color, activeJournalColorTarget);
+  if (!journalCustomColors.includes(color)) {
+    journalCustomColors.push(color);
+    createJournalColorPalette();
+    try {
+      localStorage.setItem(journalCustomColorsStorageKey, JSON.stringify(journalCustomColors));
+    } catch (error) {
+      console.error("Unable to save custom journal colors.", error);
+    }
+  }
+  if (activeJournalColorTarget === "text") applyJournalFormatCommand("foreColor", color);
+  closeJournalColorPopover();
+});
+
+document.addEventListener("selectionchange", () => {
+  const range = saveJournalEditorSelection();
+  const activeField = getJournalFieldForNode(document.activeElement);
+  if (range || activeField) {
+    showJournalFormatToolbar();
+    updateJournalFormatToolbar();
+  } else if (!journalFormatToolbar?.contains(document.activeElement)) {
+    hideJournalFormatToolbar();
+  }
+});
+
+document.addEventListener("mousedown", (event) => {
+  const target = event.target;
+  const clickedEditor = journalEntryFields.some((field) => field === target || field.contains(target));
+  const clickedToolbar = journalFormatToolbar?.contains(target) || journalColorPopover?.contains(target);
+  if (!clickedEditor && !clickedToolbar) {
+    pendingJournalFormat = {};
+    hideJournalFormatToolbar();
+  }
+  if (!journalColorPopover?.contains(target)
+    && !journalColorToggles.some((toggle) => toggle === target || toggle.contains(target))) {
+    closeJournalColorPopover();
+  }
 });
 
 journalEntryBack?.addEventListener("click", () => {
@@ -2625,6 +3848,12 @@ journalEntryDiscardConfirm?.addEventListener("click", () => {
 });
 
 journalPages?.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-journal-entry]");
+  if (deleteButton) {
+    event.stopPropagation();
+    deleteJournalEntry(deleteButton);
+    return;
+  }
   const editButton = event.target.closest("[data-edit-journal-entry]");
   if (!editButton) return;
   event.stopPropagation();
@@ -2640,9 +3869,35 @@ function collapseFeatureDrawer() {
   });
 }
 
+function collapseJournalPenDrawer() {
+  deactivateJournalDrawingMode();
+  journalEntryTools.find((tool) => tool.dataset.featureTool === "pen")
+    ?.setAttribute("aria-pressed", "false");
+  if (activeJournalColorTarget === "pen") closeJournalColorPopover();
+}
+
 function selectJournalFeature(tool) {
   if (!featureExpansionDrawer) return;
   const featureName = tool.dataset.featureTool || "";
+  if (featureName === "note") {
+    collapseFeatureDrawer();
+    collapseJournalPenDrawer();
+    spawnJournalStickyNote();
+    return;
+  }
+  if (featureName === "pen") {
+    const isOpen = !journalPenDrawer?.classList.contains("drawer-collapsed");
+    collapseFeatureDrawer();
+    if (isOpen) {
+      collapseJournalPenDrawer();
+      return;
+    }
+    collapseJournalPenDrawer();
+    tool.setAttribute("aria-pressed", "true");
+    activateJournalDrawingMode();
+    return;
+  }
+  collapseJournalPenDrawer();
   if (activeJournalFeature === featureName && !featureExpansionDrawer.classList.contains("drawer-collapsed")) {
     collapseFeatureDrawer();
     return;
@@ -2660,6 +3915,14 @@ journalEntryTools.forEach((tool) => {
   tool.addEventListener("click", () => {
     selectJournalFeature(tool);
   });
+});
+
+journalDrawToolButtons.forEach((button) => {
+  button.addEventListener("click", () => setJournalDrawTool(button.dataset.journalDrawTool));
+});
+
+journalBrushSize?.addEventListener("input", () => {
+  if (journalBrushSizeValue) journalBrushSizeValue.value = `${journalBrushSize.value}px`;
 });
 
 featureExpansionDrawerCollapse?.addEventListener("click", collapseFeatureDrawer);
@@ -2718,7 +3981,10 @@ document.querySelectorAll("[data-workspace-page]").forEach((link) => {
 const plannerAcademicView = document.querySelector("#academic-view");
 const plannerPersonalView = document.querySelector("#personal-view");
 const plannerRoutineContent = document.querySelector("#planner-routine-content");
+const plannerHomeRoutineList = document.querySelector("#planner-home-routine-list");
+const plannerRoutineTemplate = document.querySelector("#planner-routine-template");
 const plannerPersonalEmptyState = document.querySelector("#personal-empty-state");
+const plannerWidgetStreakValue = document.querySelector("#planner-widget-streak-value");
 const personalRoutineCreateTrigger = document.querySelector("#personal-routine-create-trigger");
 const personalRoutineList = document.querySelector("#personal-routine-list");
 const personalRoutineEmpty = document.querySelector("#personal-routine-empty");
@@ -3096,6 +4362,40 @@ function personalRoutineIsActiveToday(routine, date = new Date()) {
   return Array.isArray(routine.repeatDays) && routine.repeatDays.includes(date.getDay());
 }
 
+function renderHomePersonalRoutines(routines = readPersonalRoutines()) {
+  if (!plannerHomeRoutineList || !plannerRoutineTemplate) return;
+  const today = localDateKey();
+  const activeRoutines = routines.filter((routine) => personalRoutineIsActiveToday(routine));
+  plannerHomeRoutineList.replaceChildren();
+
+  activeRoutines.forEach((routine) => {
+    const card = plannerRoutineTemplate.content.firstElementChild.cloneNode(true);
+    card.dataset.personalRoutineId = routine.id;
+    card.querySelector(".planner-home-routine__title").textContent = routine.title;
+    card.querySelector(".planner-personal__summary")?.remove();
+    const list = card.querySelector(".planner-routine-list");
+    list.replaceChildren();
+    routine.items.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.className = "planner-routine-item";
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = item.completedOn === today;
+      checkbox.dataset.personalRoutineItem = item.id;
+      checkbox.setAttribute("aria-label", `${checkbox.checked ? "Mark incomplete" : "Mark complete"}: ${item.text}`);
+      const text = document.createElement("span");
+      text.textContent = item.text;
+      listItem.classList.toggle("is-complete", checkbox.checked);
+      label.append(checkbox, text);
+      listItem.append(label);
+      list.append(listItem);
+    });
+    plannerHomeRoutineList.append(card);
+  });
+  renderPlannerPersonalState();
+}
+
 function updatePersonalStreak(completedToday) {
   const key = `${getPersonalRoutineStorageKey()}:streak`;
   const today = localDateKey();
@@ -3122,6 +4422,10 @@ function updatePersonalStreak(completedToday) {
 
 function renderPersonalStreak(count = 0) {
   if (personalStreakValue) personalStreakValue.textContent = String(count);
+  if (plannerWidgetStreakValue) {
+    plannerWidgetStreakValue.textContent = String(count);
+    plannerWidgetStreakValue.closest(".planner-personal__streak")?.setAttribute("aria-label", `Streak: ${count}`);
+  }
   if (!streakAnimationImage) return;
   const isActive = count > 0;
   streakAnimationImage.src = isActive ? "assets/streak.gif" : "assets/streak-zero.png";
@@ -3203,6 +4507,7 @@ function renderPersonalRoutines() {
   if (!activeRoutines.length) {
     personalRoutineEmpty.hidden = false;
     updatePersonalStreak(false);
+    renderHomePersonalRoutines(activeRoutines);
     return;
   }
   personalRoutineEmpty.hidden = true;
@@ -3244,6 +4549,7 @@ function renderPersonalRoutines() {
   });
   const completedToday = activeRoutines.some((routine) => routine.items.some((item) => item.completedOn === todayKey));
   updatePersonalStreak(completedToday);
+  renderHomePersonalRoutines(activeRoutines);
 }
 
 function addRoutineItemInput(value = "") {

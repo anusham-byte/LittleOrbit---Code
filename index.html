@@ -400,21 +400,33 @@
                 </template>
               </section>
               <section class="planner-view" id="personal-view" aria-label="Personal Planner" hidden>
+                <p class="planner-section-label">TODAY'S ROUTINES:</p>
                 <p class="planner-empty-state" id="personal-empty-state">NO TASKS FOR TODAY! 🫠</p>
-                <div class="planner-personal" id="planner-routine-content" hidden></div>
+                <div class="planner-personal" id="planner-routine-content" hidden>
+                  <div class="planner-home-routine-list" id="planner-home-routine-list"></div>
+                  <div class="planner-personal__summary">
+                    <div class="planner-personal__streak" aria-label="Streak: 0">
+                      <span>STREAK:</span>
+                      <strong id="planner-widget-streak-value">0</strong>
+                    </div>
+                    <div class="planner-personal__progress">
+                      <div class="planner-progress-bar" role="progressbar" aria-label="Routine progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <span class="planner-progress-bar__fill"></span>
+                      </div>
+                      <span class="planner-progress-value">0%</span>
+                    </div>
+                    <button class="planner-habit-garden" type="button" aria-label="See my Habit Garden">
+                      <svg viewBox="0 0 640 640" aria-hidden="true" focusable="false">
+                        <path d="M598.6 297.4C611.1 309.9 611.1 330.2 598.6 342.7L470.6 470.7C461.4 479.9 447.7 482.6 435.7 477.6C423.7 472.6 416 460.9 416 448L416 384L80 384C53.5 384 32 362.5 32 336L32 304C32 277.5 53.5 256 80 256L416 256L416 192C416 179.1 423.8 167.4 435.8 162.4L470.7 169.3L598.7 297.3z"></path>
+                      </svg>
+                      <span>SEE MY HABIT GARDEN</span>
+                    </button>
+                  </div>
+                </div>
                 <template id="planner-routine-template">
-                  <div class="planner-personal__workspace">
-                    <h3>Night Routine:</h3>
+                  <div class="planner-home-routine" data-personal-routine-id>
+                    <h3 class="planner-home-routine__title"></h3>
                     <ul class="planner-routine-list">
-                      <li class="planner-routine-item">
-                        <label><input type="checkbox"><span>Face wash</span></label>
-                      </li>
-                      <li class="planner-routine-item">
-                        <label><input type="checkbox"><span>Apply cream</span></label>
-                      </li>
-                      <li class="planner-routine-item">
-                        <label><input type="checkbox"><span>Pack my bag</span></label>
-                      </li>
                     </ul>
                     <div class="planner-personal__summary">
                         <div class="planner-personal__streak" aria-label="Streak: 0">
@@ -569,25 +581,51 @@
         </header>
         <div class="journal-entry-canvas__body">
           <aside class="journal-entry-canvas__tools" aria-label="Entry tools">
-            <button class="journal-entry-tool" type="button" data-feature-tool="prompts" aria-pressed="false">
-              <span class="journal-entry-tool__icon" aria-hidden="true">💬</span>
-              <span>Prompts</span>
-            </button>
-            <button class="journal-entry-tool" type="button" data-feature-tool="note" aria-pressed="false">
-              <span class="journal-entry-tool__icon" aria-hidden="true">📄</span>
-              <span>Note</span>
-            </button>
             <button class="journal-entry-tool" type="button" data-feature-tool="stickers" aria-pressed="false">
-              <span class="journal-entry-tool__icon" aria-hidden="true">⭐</span>
+              <span class="journal-entry-tool__icon" aria-hidden="true">
+                <svg viewBox="0 0 640 640"><!--!Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M272.5 96C272.5 78.3 286.8 64 304.5 64L336.5 64C354.2 64 368.5 78.3 368.5 96L368.5 236.9L490.5 166.5C505.8 157.7 525.4 162.9 534.2 178.2L550.2 205.9C559 221.2 553.8 240.8 538.5 249.6L416.5 320L538.5 390.4C553.8 399.2 559.1 418.8 550.2 434.1L534.2 461.8C525.4 477.1 505.8 482.4 490.5 473.5L368.5 403.1L368.5 544C368.5 561.7 354.2 576 336.5 576L304.5 576C286.8 576 272.5 561.7 272.5 544L272.5 403.1L150.5 473.5C135.2 482.3 115.6 477.1 106.8 461.8L90.8 434.1C82 418.8 87.2 399.2 102.5 390.4L224.5 320L102.5 249.6C87.2 240.8 82 221.2 90.8 205.9L106.8 178.2C115.6 162.9 135.2 157.7 150.5 166.5L272.5 236.9L272.5 96z"/></svg>
+              </span>
               <span>Stickers</span>
             </button>
             <button class="journal-entry-tool" type="button" data-feature-tool="image" aria-pressed="false">
-              <span class="journal-entry-tool__icon" aria-hidden="true">🖼️</span>
+              <span class="journal-entry-tool__icon" aria-hidden="true">
+                <svg viewBox="0 0 640 640"><!--!Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 160C544 124.7 515.3 96 480 96L160 96zM224 176C250.5 176 272 197.5 272 224C272 250.5 250.5 272 224 272C197.5 272 176 250.5 176 224C176 197.5 197.5 176 224 176zM368 288C376.4 288 384.1 292.4 388.5 299.5L476.5 443.5C481 450.9 481.2 460.2 477 467.8C472.8 475.4 464.7 480 456 480L184 480C175.1 480 166.8 475 162.7 467.1C158.6 459.2 159.2 449.6 164.3 442.3L220.3 362.3C224.8 355.9 232.1 352.1 240 352.1C247.9 352.1 255.2 355.9 259.7 362.3L286.1 400.1L347.5 299.6C351.9 292.5 359.6 288.1 368 288.1z"/></svg>
+              </span>
               <span>Image</span>
             </button>
+            <button class="journal-entry-tool" type="button" data-feature-tool="note" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">
+                <svg viewBox="0 0 640 640"><!--!Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M336 496L160 496C151.2 496 144 488.8 144 480L144 160C144 151.2 151.2 144 160 144L480 144C488.8 144 496 151.2 496 160L496 336L408 336C368.2 336 336 368.2 336 408L336 496zM476.1 384L384 476.1L384 408C384 394.7 394.7 384 408 384L476.1 384zM96 480C96 515.3 124.7 544 160 544L357.5 544C374.5 544 390.8 537.3 402.8 525.3L525.3 402.7C537.3 390.7 544 374.4 544 357.4L544 160C544 124.7 515.3 96 480 96L160 96C124.7 96 96 124.7 96 160L96 480z"/></svg>
+              </span>
+              <span>Note</span>
+            </button>
             <button class="journal-entry-tool" type="button" data-feature-tool="pen" aria-pressed="false">
-              <span class="journal-entry-tool__icon" aria-hidden="true">✏️</span>
-              <span>Pen</span>
+              <span class="journal-entry-tool__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M18.85,10.39l1.06-1.06c.78-.78.78-2.05,0-2.83L18.5,5.09c-.78-.78-2.05-.78-2.83,0l-1.06,1.06,4.24,4.24zM13.19,7.56l-9.05,9.05c-.09.09-.14.22-.14.35v3.54c0 .28.22.5.5.5h3.54c.13,0 .26-.05.35-.15l9.05-9.05-4.25-4.24zM19,17.5c0,2.19-2.54,3.5-5,3.5-.55,0-1-.45-1-1s.45-1,1-1c1.54,0,3-.73,3-1.5,0-.47-.48-.87-1.23-1.2l1.48-1.48c1.07.63,1.75,1.47,1.75,2.68zM4.58,13.35C3.61,12.79,3,12.06,3,11c0-1.8,1.89-2.63,3.56-3.36C7.59,7.18,9,6.56,9,6c0-.41-.78-1-2-1-1.26,0-1.8.61-1.83.64-.35.41-.98.46-1.4.12-.41-.34-.49-.95-.15-1.38C3.73,4.24,4.76,3,7,3c2.24,0,4,1.32,4,3,0,1.87-1.93,2.72-3.64,3.47C6.42,9.88,5,10.5,5,11c0,.31.43.6,1.07.86l-1.49,1.49z"/></svg>
+              </span>
+              <span>Draw</span>
+            </button>
+            <button class="journal-entry-tool" type="button" data-feature-tool="prompts" aria-pressed="false">
+              <span class="journal-entry-tool__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M2.5 5.5C2.5 6.33 3.17 7 4 7h3.5v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7H14c.83 0 1.5-.67 1.5-1.5S14.83 4 14 4H4c-.83 0-1.5.67-1.5 1.5zM20 9h-6c-.83 0-1.5.67-1.5 1.5S13.17 12 14 12h1.5v5.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V12H20c.83 0 1.5-.67 1.5-1.5S20.83 9 20 9z"/></svg>
+              </span>
+              <span>Prompts</span>
+            </button>
+          </aside>
+          <aside class="journal-pen-drawer drawer-collapsed" id="journal-pen-drawer" aria-label="Drawing tools" aria-hidden="true">
+            <div class="journal-pen-drawer__tools" role="group" aria-label="Choose drawing tool">
+              <button class="journal-draw-tool" type="button" data-journal-draw-tool="pen" aria-label="Pen" title="Pen" aria-pressed="true"><span class="journal-draw-tool__icon journal-draw-tool__icon--pen" aria-hidden="true"></span></button>
+              <button class="journal-draw-tool" type="button" data-journal-draw-tool="highlighter" aria-label="Highlighter" title="Highlighter" aria-pressed="false"><span class="journal-draw-tool__icon journal-draw-tool__icon--highlighter" aria-hidden="true"></span></button>
+              <button class="journal-draw-tool" type="button" data-journal-draw-tool="crayon" aria-label="Crayon" title="Crayon" aria-pressed="false"><span class="journal-draw-tool__icon journal-draw-tool__icon--crayon" aria-hidden="true"></span></button>
+              <button class="journal-draw-tool" type="button" data-journal-draw-tool="eraser" aria-label="Eraser" title="Eraser" aria-pressed="false"><span class="journal-draw-tool__icon journal-draw-tool__icon--eraser" aria-hidden="true"></span></button>
+            </div>
+            <label class="journal-brush-size" for="journal-brush-size">
+              <span class="visually-hidden">Brush size</span>
+              <input id="journal-brush-size" type="range" min="1" max="50" value="4" aria-label="Brush size">
+              <output data-journal-brush-size-value for="journal-brush-size">4px</output>
+            </label>
+            <button class="journal-pen-color" type="button" data-journal-color-toggle data-journal-color-target="pen" aria-label="Drawing color" aria-expanded="false" aria-controls="journal-color-popover">
+              <span class="journal-pen-color__indicator" data-journal-color-indicator="pen" aria-hidden="true"></span>
             </button>
           </aside>
           <aside class="feature-expansion-drawer drawer-collapsed" id="feature-expansion-drawer" aria-label="Feature panel" aria-hidden="true">
@@ -595,9 +633,61 @@
             <div class="feature-expansion-drawer__content" aria-live="polite"></div>
           </aside>
           <main id="canvas-typing-area" class="journal-entry-canvas__typing" aria-label="Journal entry writing area">
-            <div class="journal-entry-field journal-entry-field--heading" contenteditable="true" role="textbox" aria-label="Heading" data-entry-field="heading" data-placeholder="Heading"></div>
-            <div class="journal-entry-field journal-entry-field--subheading" contenteditable="true" role="textbox" aria-label="Subheading" data-entry-field="subheading" data-placeholder="Add a subheading"></div>
-            <div class="journal-entry-field journal-entry-field--body" contenteditable="true" role="textbox" aria-label="Body" data-entry-field="body" data-placeholder="Body"></div>
+            <div class="journal-format-toolbar" id="journal-format-toolbar" role="toolbar" aria-label="Journal text formatting" aria-hidden="true">
+              <select id="journal-font-family" aria-label="Font family">
+                <option value="Shrikhand">Shrikhand</option>
+                <option value="Henny Penny">Henny Penny</option>
+                <option value="Pirata One">Pirata One</option>
+                <option value="Ribeye">Ribeye</option>
+                <option value="Emilys Candy">Emilys Candy</option>
+                <option value="VT323">VT323</option>
+                <option value="Grandstander" selected>Grandstander</option>
+                <option value="Sniglet">Sniglet</option>
+                <option value="Share Tech Mono">Share Tech Mono</option>
+              </select>
+              <select id="journal-font-size" aria-label="Text size">
+                <option value="32">Heading · 32px</option>
+                <option value="22">Subheading · 22px</option>
+                <option value="16" selected>Body · 16px</option>
+              </select>
+              <div class="journal-format-color-picker">
+                <button class="journal-format-button journal-format-color-toggle" type="button" data-journal-color-toggle data-journal-color-target="text" aria-label="Text color" aria-expanded="false" aria-controls="journal-color-popover">
+                  <span aria-hidden="true">A</span>
+                  <span class="journal-format-color-indicator" data-journal-color-indicator="text" aria-hidden="true"></span>
+                </button>
+              </div>
+              <div class="journal-format-toolbar__group" role="group" aria-label="Text style">
+                <button class="journal-format-button journal-format-button--text" type="button" data-journal-command="bold" aria-label="Bold" title="Bold" aria-pressed="false"><strong>B</strong></button>
+                <button class="journal-format-button journal-format-button--text" type="button" data-journal-command="italic" aria-label="Italic" title="Italic" aria-pressed="false"><em>I</em></button>
+                <button class="journal-format-button journal-format-button--text" type="button" data-journal-command="underline" aria-label="Underline" title="Underline" aria-pressed="false"><u>U</u></button>
+              </div>
+              <div class="journal-format-toolbar__group" role="group" aria-label="Text alignment">
+                <button class="journal-format-button" type="button" data-journal-command="justifyLeft" aria-label="Align left" title="Align left" aria-pressed="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 9h11M4 13h16M4 17h11M4 21h16"/></svg>
+                </button>
+                <button class="journal-format-button" type="button" data-journal-command="justifyCenter" aria-label="Align center" title="Align center" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M7 9h10M4 13h16M7 17h10M4 21h16"/></svg>
+                </button>
+                <button class="journal-format-button" type="button" data-journal-command="justifyRight" aria-label="Align right" title="Align right" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M9 9h11M4 13h16M9 17h11M4 21h16"/></svg>
+                </button>
+                <button class="journal-format-button" type="button" data-journal-command="justifyFull" aria-label="Justify text" title="Justify text" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 9h16M4 13h16M4 17h16M4 21h16"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="journal-format-color-popover" id="journal-color-popover" role="dialog" aria-label="Choose color" hidden>
+              <div class="journal-format-color-swatches" data-journal-color-swatches></div>
+              <label class="journal-format-custom-color" title="Choose a custom color">
+                <span aria-hidden="true">＋</span>
+                <span>Custom</span>
+                <input type="color" value="#000000" data-journal-custom-color aria-label="Choose a custom color">
+              </label>
+            </div>
+            <canvas class="journal-drawing-canvas" id="journal-drawing-canvas" aria-label="Journal drawing layer" aria-hidden="true"></canvas>
+            <div class="journal-entry-field journal-entry-field--heading" contenteditable="true" role="textbox" aria-label="Heading" data-entry-field="heading" data-placeholder=""></div>
+            <div class="journal-entry-field journal-entry-field--subheading" contenteditable="true" role="textbox" aria-label="Subheading" data-entry-field="subheading" data-placeholder=""></div>
+            <div class="journal-entry-field journal-entry-field--body" contenteditable="true" role="textbox" aria-label="Body" data-entry-field="body" data-placeholder="Type here..."></div>
           </main>
         </div>
       </section>
