@@ -831,12 +831,15 @@ function setWorkspacePage(pageName) {
   } catch (error) {
     console.error("Unable to save the current Little Orbit workspace page.", error);
   }
+  window.dispatchEvent(new CustomEvent("littleorbit:workspace-page-change", {
+    detail: { pageName },
+  }));
 }
 
 const asmrObjectInstructions = {
-  slime: "Move your cursor through the canvas to drag, poke, and deform the dynamic physics blob!",
-  needoh: "Click and hold the squishy sphere to compress it, then release for a slow-rise rebound!",
-  wax: "Click across the wax block to fracture the shell with procedural cracks!",
+  slime: "Move ur cursor through the slime!",
+  needoh: "Click on the Needoh to play!",
+  wax: "Click on this mysterious box to see what happens!",
 };
 const asmrObjectCards = [...document.querySelectorAll("[data-asmr-object-card]")];
 const asmrInstruction = document.querySelector("[data-asmr-instruction]");
@@ -1056,6 +1059,1227 @@ function resizeAsmrCanvas() {
   asmrCanvas.height = pixelHeight;
   asmrCanvas.getContext("2d")?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 }
+
+const slimeContext = asmrCanvas?.getContext("2d");
+const slimePointCount = 24;
+const slimePoints = [];
+let slimeBaseRadius = 0;
+let slimeModeActive = false;
+let slimeAnimationFrame = 0;
+let slimeAudio = null;
+let slimeAudioUnavailable = false;
+let slimeLastSoundAt = Number.NEGATIVE_INFINITY;
+const slimePointer = { down: false, lastX: null, lastY: null };
+
+function clampSlimeValue(value, minimum, maximum) {
+  return Math.max(minimum, Math.min(maximum, value));
+}
+
+function getSlimeCanvasMetrics() {
+  const bounds = asmrCanvas.getBoundingClientRect();
+  const radius = Math.min(bounds.width * 0.25, bounds.height * 0.31, 210);
+  return {
+    width: bounds.width,
+    height: bounds.height,
+    centerX: bounds.width / 2,
+    centerY: bounds.height * 0.6,
+    radius,
+  };
+}
+
+function syncSlimeRestingPoints(radius) {
+  if (!radius) return;
+  const scale = slimeBaseRadius ? radius / slimeBaseRadius : 1;
+  if (!slimePoints.length) {
+    for (let index = 0; index < slimePointCount; index += 1) {
+      const angle = (Math.PI * 2 * index) / slimePointCount;
+      const organicOffset = 1 + Math.sin(angle * 3 + 0.4) * 0.025
+        + Math.cos(angle * 5) * 0.012;
+      slimePoints.push({
+        angle,
+        restX: 0,
+        restY: 0,
+        offsetX: 0,
+        offsetY: 0,
+        velocityX: 0,
+        velocityY: 0,
+        organicOffset,
+      });
+    }
+  }
+  slimePoints.forEach((point) => {
+    point.restX = Math.cos(point.angle) * radius * point.organicOffset;
+    point.restY = Math.sin(point.angle) * radius * point.organicOffset;
+    point.offsetX *= scale;
+    point.offsetY *= scale;
+    point.velocityX *= scale;
+    point.velocityY *= scale;
+  });
+  slimeBaseRadius = radius;
+}
+
+function traceSlimeShape(context, centerX, centerY) {
+  const positions = slimePoints.map((point) => ({
+    x: centerX + point.restX + point.offsetX,
+    y: centerY + point.restY + point.offsetY,
+  }));
+  const last = positions[positions.length - 1];
+  const first = positions[0];
+  context.beginPath();
+  context.moveTo((last.x + first.x) / 2, (last.y + first.y) / 2);
+  positions.forEach((point, index) => {
+    const next = positions[(index + 1) % positions.length];
+    context.quadraticCurveTo(
+      point.x,
+      point.y,
+      (point.x + next.x) / 2,
+      (point.y + next.y) / 2,
+    );
+  });
+  context.closePath();
+}
+
+function drawSlimeBlob() {
+  if (!slimeContext || !asmrCanvas) return;
+  const { width, height, centerX, centerY, radius } = getSlimeCanvasMetrics();
+  if (!width || !height || !radius) return;
+  syncSlimeRestingPoints(radius);
+  slimeContext.clearRect(0, 0, width, height);
+
+  const wobble = slimePoints.reduce(
+    (total, point) => total + Math.hypot(point.offsetX, point.offsetY),
+    0,
+  ) / slimePoints.length;
+  const shadowStretch = clampSlimeValue(wobble / radius, 0, 0.25);
+  slimeContext.save();
+  slimeContext.translate(centerX, centerY + radius * 0.72);
+  slimeContext.scale(1 + shadowStretch * 0.7, 0.32);
+  const shadow = slimeContext.createRadialGradient(0, 0, radius * 0.08, 0, 0, radius * 1.2);
+  shadow.addColorStop(0, "rgba(54, 29, 78, 0.32)");
+  shadow.addColorStop(0.6, "rgba(54, 29, 78, 0.16)");
+  shadow.addColorStop(1, "rgba(54, 29, 78, 0)");
+  slimeContext.fillStyle = shadow;
+  slimeContext.beginPath();
+  slimeContext.ellipse(0, 0, radius * (1.08 + shadowStretch), radius * 0.43, 0, 0, Math.PI * 2);
+  slimeContext.fill();
+  slimeContext.restore();
+
+  traceSlimeShape(slimeContext, centerX, centerY);
+  const bodyGradient = slimeContext.createRadialGradient(
+    centerX - radius * 0.36,
+    centerY - radius * 0.48,
+    radius * 0.04,
+    centerX,
+    centerY + radius * 0.08,
+    radius * 1.2,
+  );
+  bodyGradient.addColorStop(0, "#FFF8FF");
+  bodyGradient.addColorStop(0.16, "#E9D4FF");
+  bodyGradient.addColorStop(0.42, "#C99BFF");
+  bodyGradient.addColorStop(0.7, "#A66AE6");
+  bodyGradient.addColorStop(0.91, "#7946B2");
+  bodyGradient.addColorStop(1, "#4D286F");
+  slimeContext.fillStyle = bodyGradient;
+  slimeContext.fill();
+
+  traceSlimeShape(slimeContext, centerX, centerY);
+  const lowerRim = slimeContext.createRadialGradient(
+    centerX - radius * 0.08,
+    centerY - radius * 0.28,
+    radius * 0.36,
+    centerX,
+    centerY + radius * 0.16,
+    radius * 1.12,
+  );
+  lowerRim.addColorStop(0, "rgba(255, 255, 255, 0)");
+  lowerRim.addColorStop(0.55, "rgba(92, 48, 132, 0)");
+  lowerRim.addColorStop(0.84, "rgba(70, 32, 111, 0.2)");
+  lowerRim.addColorStop(1, "rgba(42, 18, 68, 0.58)");
+  slimeContext.fillStyle = lowerRim;
+  slimeContext.fill();
+
+  slimeContext.save();
+  traceSlimeShape(slimeContext, centerX, centerY);
+  slimeContext.clip();
+  slimeContext.beginPath();
+  slimeContext.moveTo(centerX - radius * 0.66, centerY - radius * 0.12);
+  slimeContext.quadraticCurveTo(
+    centerX - radius * 0.56,
+    centerY - radius * 0.68,
+    centerX - radius * 0.08,
+    centerY - radius * 0.76,
+  );
+  slimeContext.quadraticCurveTo(
+    centerX - radius * 0.42,
+    centerY - radius * 0.72,
+    centerX - radius * 0.45,
+    centerY - radius * 0.32,
+  );
+  slimeContext.lineCap = "round";
+  slimeContext.strokeStyle = "rgba(255, 255, 255, 0.42)";
+  slimeContext.lineWidth = radius * 0.075;
+  slimeContext.stroke();
+  slimeContext.strokeStyle = "rgba(255, 255, 255, 0.96)";
+  slimeContext.lineWidth = radius * 0.027;
+  slimeContext.stroke();
+
+  const glint = slimeContext.createRadialGradient(
+    centerX - radius * 0.43,
+    centerY - radius * 0.48,
+    1,
+    centerX - radius * 0.43,
+    centerY - radius * 0.48,
+    radius * 0.15,
+  );
+  glint.addColorStop(0, "rgba(255, 255, 255, 0.72)");
+  glint.addColorStop(1, "rgba(255, 255, 255, 0)");
+  slimeContext.fillStyle = glint;
+  slimeContext.beginPath();
+  slimeContext.ellipse(
+    centerX - radius * 0.43,
+    centerY - radius * 0.48,
+    radius * 0.15,
+    radius * 0.09,
+    -0.55,
+    0,
+    Math.PI * 2,
+  );
+  slimeContext.fill();
+  slimeContext.restore();
+}
+
+function playSlimeSquish() {
+  const now = performance.now();
+  if (now - slimeLastSoundAt < 400) return;
+  slimeLastSoundAt = now;
+  if (slimeAudioUnavailable) return;
+  if (!slimeAudio) {
+    slimeAudio = new Audio("assets/gel-squish.mp3");
+    slimeAudio.preload = "none";
+    slimeAudio.addEventListener("error", () => {
+      slimeAudioUnavailable = true;
+      console.error("Unable to load the slime sound at assets/gel-squish.mp3.", slimeAudio.error);
+    }, { once: true });
+  }
+  const volume = Number(window.currentVolume);
+  slimeAudio.volume = clampSlimeValue(Number.isFinite(volume) ? volume : 0, 0, 100) / 100;
+  if (slimeAudio.readyState > 0) slimeAudio.currentTime = 0;
+  const playback = slimeAudio.play();
+  playback?.catch((error) => {
+    if (error.name !== "AbortError") {
+      console.error("Unable to play the slime sound at assets/gel-squish.mp3.", error);
+    }
+  });
+}
+
+function applySlimePointerImpulse(x, y, movement, isPress = false) {
+  const { centerX, centerY, radius } = getSlimeCanvasMetrics();
+  if (!radius) return false;
+  const velocityLevel = clampSlimeValue(Number(window.currentVelocity) || 0, 0, 100) / 100;
+  const speedScale = 0.35 + velocityLevel * 1.65;
+  const interactionRadius = radius * 0.78;
+  let touchedBlob = false;
+
+  slimePoints.forEach((point) => {
+    const pointX = centerX + point.restX + point.offsetX;
+    const pointY = centerY + point.restY + point.offsetY;
+    const deltaX = x - pointX;
+    const deltaY = y - pointY;
+    const distance = Math.hypot(deltaX, deltaY);
+    if (distance >= interactionRadius) return;
+
+    touchedBlob = true;
+    const influence = 1 - distance / interactionRadius;
+    const direction = isPress ? 1 : -1;
+    const impulse = Math.min(Math.max(movement, 6), 24) * influence * speedScale;
+    const normalX = distance ? deltaX / distance : Math.cos(point.angle);
+    const normalY = distance ? deltaY / distance : Math.sin(point.angle);
+    point.velocityX += normalX * impulse * direction;
+    point.velocityY += normalY * impulse * direction;
+    point.velocityX += (slimePointer.lastX === null ? 0 : (x - slimePointer.lastX) * 0.035)
+      * influence * speedScale;
+    point.velocityY += (slimePointer.lastY === null ? 0 : (y - slimePointer.lastY) * 0.035)
+      * influence * speedScale;
+  });
+
+  if (touchedBlob) playSlimeSquish();
+  return touchedBlob;
+}
+
+function getSlimePointerPosition(event) {
+  const bounds = asmrCanvas.getBoundingClientRect();
+  return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+}
+
+function handleSlimePointerMove(event) {
+  const { x, y } = getSlimePointerPosition(event);
+  if (slimePointer.lastX !== null && slimePointer.lastY !== null) {
+    const movement = Math.hypot(x - slimePointer.lastX, y - slimePointer.lastY);
+    if (movement > 0.15) applySlimePointerImpulse(x, y, movement, slimePointer.down);
+  }
+  slimePointer.lastX = x;
+  slimePointer.lastY = y;
+}
+
+function handleSlimePointerDown(event) {
+  event.preventDefault();
+  slimePointer.down = true;
+  const { x, y } = getSlimePointerPosition(event);
+  slimePointer.lastX = x;
+  slimePointer.lastY = y;
+  applySlimePointerImpulse(x, y, 8, true);
+  asmrCanvas.setPointerCapture?.(event.pointerId);
+}
+
+function handleSlimePointerUp(event) {
+  slimePointer.down = false;
+  slimePointer.lastX = null;
+  slimePointer.lastY = null;
+  if (asmrCanvas.hasPointerCapture?.(event.pointerId)) {
+    asmrCanvas.releasePointerCapture(event.pointerId);
+  }
+}
+
+function animateSlimeBlob() {
+  slimeAnimationFrame = 0;
+  if (!slimeModeActive) return;
+  const { width, height, radius } = getSlimeCanvasMetrics();
+  if (width && height && radius) {
+    syncSlimeRestingPoints(radius);
+    const velocityLevel = clampSlimeValue(Number(window.currentVelocity) || 0, 0, 100) / 100;
+    const springScale = 0.45 + velocityLevel * 1.1;
+    const wobbleSpeed = 0.35 + velocityLevel * 1.65;
+    slimePoints.forEach((point) => {
+      point.velocityX += -point.offsetX * 0.025 * springScale;
+      point.velocityY += -point.offsetY * 0.025 * springScale;
+      point.velocityX *= 0.88;
+      point.velocityY *= 0.88;
+      point.offsetX = clampSlimeValue(point.offsetX + point.velocityX * wobbleSpeed, -radius * 0.32, radius * 0.32);
+      point.offsetY = clampSlimeValue(point.offsetY + point.velocityY * wobbleSpeed, -radius * 0.32, radius * 0.32);
+    });
+    drawSlimeBlob();
+  }
+  slimeAnimationFrame = window.requestAnimationFrame(animateSlimeBlob);
+}
+
+function startSlimeMode() {
+  if (
+    !asmrCanvas
+    || !slimeContext
+    || window.activeAsmrObject !== "slime"
+    || workspaceShell.dataset.page !== "asmr"
+    || slimeModeActive
+  ) return;
+  resizeAsmrCanvas();
+  const { radius } = getSlimeCanvasMetrics();
+  syncSlimeRestingPoints(radius);
+  slimeModeActive = true;
+  if (slimeAudio) {
+    const volume = Number(window.currentVolume);
+    slimeAudio.volume = clampSlimeValue(Number.isFinite(volume) ? volume : 0, 0, 100) / 100;
+  }
+  asmrCanvas.addEventListener("pointermove", handleSlimePointerMove);
+  asmrCanvas.addEventListener("pointerdown", handleSlimePointerDown);
+  asmrCanvas.addEventListener("pointerup", handleSlimePointerUp);
+  asmrCanvas.addEventListener("pointercancel", handleSlimePointerUp);
+  asmrCanvas.addEventListener("lostpointercapture", handleSlimePointerUp);
+  slimeAnimationFrame = window.requestAnimationFrame(animateSlimeBlob);
+}
+
+function stopSlimeMode() {
+  if (!asmrCanvas) return;
+  slimeModeActive = false;
+  if (slimeAnimationFrame) {
+    window.cancelAnimationFrame(slimeAnimationFrame);
+    slimeAnimationFrame = 0;
+  }
+  asmrCanvas.removeEventListener("pointermove", handleSlimePointerMove);
+  asmrCanvas.removeEventListener("pointerdown", handleSlimePointerDown);
+  asmrCanvas.removeEventListener("pointerup", handleSlimePointerUp);
+  asmrCanvas.removeEventListener("pointercancel", handleSlimePointerUp);
+  asmrCanvas.removeEventListener("lostpointercapture", handleSlimePointerUp);
+  slimePointer.down = false;
+  slimePointer.lastX = null;
+  slimePointer.lastY = null;
+  slimePoints.forEach((point) => {
+    point.offsetX = 0;
+    point.offsetY = 0;
+    point.velocityX = 0;
+    point.velocityY = 0;
+  });
+  if (slimeAudio) {
+    slimeAudio.pause();
+    if (slimeAudio.readyState > 0) slimeAudio.currentTime = 0;
+  }
+  if (slimeContext) {
+    slimeContext.save();
+    slimeContext.setTransform(1, 0, 0, 1, 0, 0);
+    slimeContext.clearRect(0, 0, asmrCanvas.width, asmrCanvas.height);
+    slimeContext.restore();
+  }
+}
+
+window.startSlimeMode = startSlimeMode;
+window.stopSlimeMode = stopSlimeMode;
+
+const needohCubeState = {
+  active: false,
+  frame: 0,
+  pressed: false,
+  pointerId: null,
+  squish: 0,
+  reboundStart: 0,
+  reboundAmount: 0,
+  lastFrame: 0,
+  audio: null,
+  audioUnavailable: false,
+  audioContext: null,
+  audioBoost: null,
+};
+
+function getNeedohPalette() {
+  const palettes = {
+    "mint-chocolate": { top: "#E8FFF8", front: "#9BDFD0", side: "#59B5A3", edge: "#398A7D" },
+    "dark-academia": { top: "#FFF2D8", front: "#D8B68D", side: "#A17A58", edge: "#72513F" },
+    "tulip-pastel": { top: "#FFF5FA", front: "#F1BCD0", side: "#C87999", edge: "#A25276" },
+    "retro-fun": { top: "#FFF5CF", front: "#F0B078", side: "#CC7047", edge: "#984D31" },
+  };
+  return palettes[document.documentElement.dataset.theme] || palettes["mint-chocolate"];
+}
+
+function getNeedohGeometry() {
+  const bounds = asmrCanvas.getBoundingClientRect();
+  const size = Math.min(bounds.width * 0.4, bounds.height * 0.32, 220);
+  const halfWidth = size * 0.72;
+  const depth = size * 0.42;
+  const cubeHeight = size * 1.38;
+  const baseY = Math.min(bounds.height * 0.72, bounds.height - depth - 22);
+  const centerX = bounds.width / 2;
+  const top = { x: 0, y: -cubeHeight - depth };
+  const right = { x: halfWidth, y: -cubeHeight };
+  const front = { x: 0, y: -cubeHeight + depth };
+  const left = { x: -halfWidth, y: -cubeHeight };
+  const bottomRight = { x: halfWidth, y: 0 };
+  const bottomFront = { x: 0, y: depth };
+  const bottomLeft = { x: -halfWidth, y: 0 };
+  return {
+    width: bounds.width,
+    height: bounds.height,
+    centerX,
+    baseY,
+    halfWidth,
+    depth,
+    cubeHeight,
+    points: { top, right, front, left, bottomRight, bottomFront, bottomLeft },
+  };
+}
+
+function traceNeedohFace(context, points, bulge) {
+  const center = points.reduce(
+    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
+    { x: 0, y: 0 },
+  );
+  const cornerSize = Math.min(
+    12 + needohCubeState.squish * 5,
+    ...points.map((point, index) => {
+      const next = points[(index + 1) % points.length];
+      return Math.hypot(next.x - point.x, next.y - point.y) * 0.16;
+    }),
+  );
+  const corners = points.map((point, index) => {
+    const previous = points[(index + points.length - 1) % points.length];
+    const next = points[(index + 1) % points.length];
+    const previousLength = Math.hypot(previous.x - point.x, previous.y - point.y) || 1;
+    const nextLength = Math.hypot(next.x - point.x, next.y - point.y) || 1;
+    return {
+      point,
+      start: {
+        x: point.x + ((previous.x - point.x) / previousLength) * cornerSize,
+        y: point.y + ((previous.y - point.y) / previousLength) * cornerSize,
+      },
+      end: {
+        x: point.x + ((next.x - point.x) / nextLength) * cornerSize,
+        y: point.y + ((next.y - point.y) / nextLength) * cornerSize,
+      },
+    };
+  });
+
+  context.beginPath();
+  context.moveTo(corners[0].start.x, corners[0].start.y);
+  corners.forEach((corner, index) => {
+    const nextCorner = corners[(index + 1) % corners.length];
+    context.quadraticCurveTo(corner.point.x, corner.point.y, corner.end.x, corner.end.y);
+    const midpoint = {
+      x: (corner.point.x + nextCorner.point.x) / 2,
+      y: (corner.point.y + nextCorner.point.y) / 2,
+    };
+    const outwardX = midpoint.x - center.x;
+    const outwardY = midpoint.y - center.y;
+    const outwardLength = Math.hypot(outwardX, outwardY) || 1;
+    context.quadraticCurveTo(
+      midpoint.x + (outwardX / outwardLength) * bulge,
+      midpoint.y + (outwardY / outwardLength) * bulge,
+      nextCorner.start.x,
+      nextCorner.start.y,
+    );
+  });
+  context.closePath();
+}
+
+function drawNeedohCube() {
+  if (!slimeContext || !asmrCanvas) return;
+  const geometry = getNeedohGeometry();
+  const { width, height, centerX, baseY, halfWidth, depth, cubeHeight, points } = geometry;
+  if (!width || !height || !halfWidth) return;
+
+  const squish = needohCubeState.squish;
+  const scaleX = 1 + squish * 0.25;
+  const scaleY = 1 - squish * 0.45;
+  const bulge = 3 + squish * 9;
+  const palette = getNeedohPalette();
+  slimeContext.clearRect(0, 0, width, height);
+
+  slimeContext.save();
+  slimeContext.translate(centerX, baseY + depth * 0.45);
+  slimeContext.scale(1 + squish * 0.2, 0.3 - squish * 0.06);
+  const shadow = slimeContext.createRadialGradient(0, 0, halfWidth * 0.1, 0, 0, halfWidth * 1.55);
+  shadow.addColorStop(0, "rgba(54, 39, 43, 0.27)");
+  shadow.addColorStop(0.6, "rgba(54, 39, 43, 0.15)");
+  shadow.addColorStop(1, "rgba(54, 39, 43, 0)");
+  slimeContext.fillStyle = shadow;
+  slimeContext.beginPath();
+  slimeContext.ellipse(0, 0, halfWidth * 1.45, depth * 0.65, 0, 0, Math.PI * 2);
+  slimeContext.fill();
+  slimeContext.restore();
+
+  slimeContext.save();
+  slimeContext.translate(centerX, baseY);
+  slimeContext.scale(scaleX, scaleY);
+  const { top, right, front, left, bottomRight, bottomFront, bottomLeft } = points;
+
+  traceNeedohFace(slimeContext, [front, right, bottomRight, bottomFront], bulge);
+  const sideGradient = slimeContext.createLinearGradient(0, -cubeHeight, halfWidth, depth);
+  sideGradient.addColorStop(0, palette.front);
+  sideGradient.addColorStop(0.52, palette.side);
+  sideGradient.addColorStop(1, palette.edge);
+  slimeContext.fillStyle = sideGradient;
+  slimeContext.fill();
+
+  traceNeedohFace(slimeContext, [left, front, bottomFront, bottomLeft], bulge);
+  const frontGradient = slimeContext.createLinearGradient(-halfWidth, -cubeHeight, 0, depth);
+  frontGradient.addColorStop(0, palette.top);
+  frontGradient.addColorStop(0.2, palette.front);
+  frontGradient.addColorStop(0.78, palette.front);
+  frontGradient.addColorStop(1, palette.side);
+  slimeContext.fillStyle = frontGradient;
+  slimeContext.fill();
+
+  traceNeedohFace(slimeContext, [top, right, front, left], bulge * 0.72);
+  const topGradient = slimeContext.createLinearGradient(-halfWidth, -cubeHeight - depth, halfWidth * 0.7, -cubeHeight + depth);
+  topGradient.addColorStop(0, "#FFFFFF");
+  topGradient.addColorStop(0.35, palette.top);
+  topGradient.addColorStop(1, palette.front);
+  slimeContext.fillStyle = topGradient;
+  slimeContext.fill();
+
+  slimeContext.save();
+  traceNeedohFace(slimeContext, [top, right, front, left], bulge * 0.72);
+  slimeContext.clip();
+  const topSheen = slimeContext.createRadialGradient(
+    -halfWidth * 0.38,
+    -cubeHeight - depth * 0.8,
+    1,
+    -halfWidth * 0.38,
+    -cubeHeight - depth * 0.8,
+    halfWidth * 1.2,
+  );
+  topSheen.addColorStop(0, "rgba(255, 255, 255, 0.66)");
+  topSheen.addColorStop(1, "rgba(255, 255, 255, 0)");
+  slimeContext.fillStyle = topSheen;
+  slimeContext.fillRect(-halfWidth * 1.5, -cubeHeight - depth * 1.5, halfWidth * 3, depth * 3);
+  slimeContext.beginPath();
+  slimeContext.moveTo(-halfWidth * 0.64, -cubeHeight - depth * 0.77);
+  slimeContext.quadraticCurveTo(-halfWidth * 0.52, -cubeHeight - depth * 1.03, -halfWidth * 0.08, -cubeHeight - depth * 0.82);
+  slimeContext.strokeStyle = "rgba(255, 255, 255, 0.94)";
+  slimeContext.lineWidth = Math.max(2, halfWidth * 0.045);
+  slimeContext.lineCap = "round";
+  slimeContext.stroke();
+  slimeContext.restore();
+
+  slimeContext.beginPath();
+  slimeContext.moveTo(-halfWidth * 0.72, -cubeHeight * 0.73);
+  slimeContext.quadraticCurveTo(-halfWidth * 0.46, -cubeHeight * 0.88, -halfWidth * 0.18, -cubeHeight * 0.78);
+  slimeContext.strokeStyle = "rgba(255, 255, 255, 0.55)";
+  slimeContext.lineWidth = Math.max(2, halfWidth * 0.035);
+  slimeContext.lineCap = "round";
+  slimeContext.stroke();
+
+  slimeContext.strokeStyle = `${palette.edge}88`;
+  slimeContext.lineWidth = 1.5;
+  [ [front, right, bottomRight, bottomFront], [left, front, bottomFront, bottomLeft], [top, right, front, left] ]
+    .forEach((face) => {
+      traceNeedohFace(slimeContext, face, bulge * 0.72);
+      slimeContext.stroke();
+    });
+  slimeContext.restore();
+}
+
+function pointInNeedohCube(x, y) {
+  const geometry = getNeedohGeometry();
+  const scaleX = 1 + needohCubeState.squish * 0.25;
+  const scaleY = 1 - needohCubeState.squish * 0.45;
+  const localX = (x - geometry.centerX) / scaleX;
+  const localY = (y - geometry.baseY) / scaleY;
+  const { points } = geometry;
+  const polygon = [
+    points.top,
+    points.right,
+    points.bottomRight,
+    points.bottomFront,
+    points.bottomLeft,
+    points.left,
+  ];
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index, index += 1) {
+    const currentPoint = polygon[index];
+    const previousPoint = polygon[previous];
+    const crosses = (currentPoint.y > localY) !== (previousPoint.y > localY)
+      && localX < ((previousPoint.x - currentPoint.x) * (localY - currentPoint.y))
+        / (previousPoint.y - currentPoint.y) + currentPoint.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function syncNeedohAudioVolume() {
+  if (!needohCubeState.audio) return;
+  const volume = Number(window.currentVolume);
+  needohCubeState.audio.volume = clampSlimeValue(Number.isFinite(volume) ? volume : 0, 0, 100) / 100;
+}
+
+function prepareNeedohAudio() {
+  if (needohCubeState.audio || needohCubeState.audioUnavailable) return;
+  needohCubeState.audio = new Audio("assets/needoh-squish.mp3");
+  needohCubeState.audio.preload = "auto";
+  needohCubeState.audio.addEventListener("error", () => {
+    needohCubeState.audioUnavailable = true;
+    console.error("Unable to load the NeeDoh sound at assets/needoh-squish.mp3.", needohCubeState.audio.error);
+  }, { once: true });
+  needohCubeState.audio.load();
+  syncNeedohAudioVolume();
+}
+
+function boostNeedohAudio() {
+  if (!needohCubeState.audio || needohCubeState.audioBoost) return;
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextConstructor) return;
+  try {
+    needohCubeState.audioContext = new AudioContextConstructor();
+    const source = needohCubeState.audioContext.createMediaElementSource(needohCubeState.audio);
+    needohCubeState.audioBoost = needohCubeState.audioContext.createGain();
+    needohCubeState.audioBoost.gain.value = 1.18;
+    source.connect(needohCubeState.audioBoost);
+    needohCubeState.audioBoost.connect(needohCubeState.audioContext.destination);
+  } catch (error) {
+    needohCubeState.audioContext = null;
+    needohCubeState.audioBoost = null;
+    console.error("Unable to boost the NeeDoh sound; slider volume will be used without the boost.", error);
+  }
+}
+
+function playNeedohSquish() {
+  prepareNeedohAudio();
+  if (!needohCubeState.audio || needohCubeState.audioUnavailable) return;
+  syncNeedohAudioVolume();
+  boostNeedohAudio();
+  if (needohCubeState.audioContext?.state === "suspended") {
+    needohCubeState.audioContext.resume().catch((error) => {
+      console.error("Unable to resume NeeDoh audio playback.", error);
+    });
+  }
+  if (needohCubeState.audio.readyState > 0) needohCubeState.audio.currentTime = 0;
+  const playback = needohCubeState.audio.play();
+  playback?.catch((error) => {
+    if (error.name !== "AbortError") {
+      console.error("Unable to play the NeeDoh sound at assets/needoh-squish.mp3.", error);
+    }
+  });
+}
+
+function getNeedohPointerPosition(event) {
+  const bounds = asmrCanvas.getBoundingClientRect();
+  return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+}
+
+function handleNeedohPointerDown(event) {
+  const { x, y } = getNeedohPointerPosition(event);
+  if (!pointInNeedohCube(x, y)) return;
+  event.preventDefault();
+  needohCubeState.pressed = true;
+  needohCubeState.pointerId = event.pointerId;
+  needohCubeState.reboundStart = 0;
+  playNeedohSquish();
+  asmrCanvas.setPointerCapture?.(event.pointerId);
+}
+
+function handleNeedohPointerUp(event) {
+  if (!needohCubeState.pressed) return;
+  needohCubeState.pressed = false;
+  needohCubeState.pointerId = null;
+  needohCubeState.reboundAmount = needohCubeState.squish;
+  needohCubeState.reboundStart = performance.now();
+  if (asmrCanvas.hasPointerCapture?.(event.pointerId)) {
+    asmrCanvas.releasePointerCapture(event.pointerId);
+  }
+}
+
+function animateNeedohCube(now) {
+  needohCubeState.frame = 0;
+  if (!needohCubeState.active) return;
+  const elapsed = needohCubeState.lastFrame ? Math.min(now - needohCubeState.lastFrame, 50) : 16;
+  needohCubeState.lastFrame = now;
+  if (needohCubeState.pressed) {
+    const velocity = clampSlimeValue(Number(window.currentVelocity) || 0, 0, 100) / 100;
+    const compressionDuration = 330 / (0.9 + velocity * 0.25);
+    needohCubeState.squish += ((1 - needohCubeState.squish) * elapsed) / compressionDuration;
+    needohCubeState.squish = Math.min(1, needohCubeState.squish);
+  } else if (needohCubeState.reboundStart) {
+    const progress = clampSlimeValue((now - needohCubeState.reboundStart) / 1500, 0, 1);
+    const easedProgress = progress * progress * (3 - 2 * progress);
+    needohCubeState.squish = needohCubeState.reboundAmount * (1 - easedProgress);
+    if (progress === 1) {
+      needohCubeState.squish = 0;
+      needohCubeState.reboundStart = 0;
+    }
+  }
+  drawNeedohCube();
+  needohCubeState.frame = window.requestAnimationFrame(animateNeedohCube);
+}
+
+function startNeedohMode() {
+  if (
+    !asmrCanvas
+    || !slimeContext
+    || window.activeAsmrObject !== "needoh"
+    || workspaceShell.dataset.page !== "asmr"
+    || needohCubeState.active
+  ) return;
+  resizeAsmrCanvas();
+  prepareNeedohAudio();
+  needohCubeState.active = true;
+  needohCubeState.lastFrame = 0;
+  asmrCanvas.addEventListener("pointerdown", handleNeedohPointerDown);
+  asmrCanvas.addEventListener("pointerup", handleNeedohPointerUp);
+  asmrCanvas.addEventListener("pointercancel", handleNeedohPointerUp);
+  asmrCanvas.addEventListener("lostpointercapture", handleNeedohPointerUp);
+  needohCubeState.frame = window.requestAnimationFrame(animateNeedohCube);
+}
+
+function stopNeedohMode() {
+  if (!asmrCanvas) return;
+  needohCubeState.active = false;
+  if (needohCubeState.frame) {
+    window.cancelAnimationFrame(needohCubeState.frame);
+    needohCubeState.frame = 0;
+  }
+  asmrCanvas.removeEventListener("pointerdown", handleNeedohPointerDown);
+  asmrCanvas.removeEventListener("pointerup", handleNeedohPointerUp);
+  asmrCanvas.removeEventListener("pointercancel", handleNeedohPointerUp);
+  asmrCanvas.removeEventListener("lostpointercapture", handleNeedohPointerUp);
+  if (needohCubeState.pointerId !== null && asmrCanvas.hasPointerCapture?.(needohCubeState.pointerId)) {
+    asmrCanvas.releasePointerCapture(needohCubeState.pointerId);
+  }
+  needohCubeState.pointerId = null;
+  needohCubeState.pressed = false;
+  needohCubeState.squish = 0;
+  needohCubeState.reboundStart = 0;
+  needohCubeState.lastFrame = 0;
+  if (needohCubeState.audio) {
+    needohCubeState.audio.pause();
+    if (needohCubeState.audio.readyState > 0) needohCubeState.audio.currentTime = 0;
+  }
+  if (slimeContext) {
+    slimeContext.save();
+    slimeContext.setTransform(1, 0, 0, 1, 0, 0);
+    slimeContext.clearRect(0, 0, asmrCanvas.width, asmrCanvas.height);
+    slimeContext.restore();
+  }
+}
+
+window.startNeedohMode = startNeedohMode;
+window.stopNeedohMode = stopNeedohMode;
+
+const waxCrackState = {
+  active: false,
+  frame: 0,
+  groups: [],
+  healTimers: new Set(),
+  audioTemplate: null,
+  activeAudio: new Set(),
+  squish: 0,
+  squishVelocity: 0,
+  lastFrame: 0,
+};
+
+function getWaxPalette() {
+  const palettes = {
+    "mint-chocolate": { top: "#FFF4C0", front: "#E8C968", side: "#BC923A", edge: "#8D692B" },
+    "dark-academia": { top: "#FFF0C1", front: "#D6B05D", side: "#A77E35", edge: "#76551F" },
+    "tulip-pastel": { top: "#FFF6C9", front: "#EACB73", side: "#BE9847", edge: "#8C6D30" },
+    "retro-fun": { top: "#FFF1B6", front: "#F0C354", side: "#C58B2D", edge: "#895B1D" },
+  };
+  return palettes[document.documentElement.dataset.theme] || palettes["mint-chocolate"];
+}
+
+function getWaxGeometry() {
+  const bounds = asmrCanvas.getBoundingClientRect();
+  const barWidth = Math.min(bounds.width * 0.56, bounds.height * 0.66, 390);
+  const halfWidth = barWidth / 2;
+  const depth = barWidth * 0.23;
+  const cuboidHeight = barWidth * 0.36;
+  const baseY = Math.min(bounds.height * 0.7, bounds.height - depth - 24);
+  return {
+    width: bounds.width,
+    height: bounds.height,
+    centerX: bounds.width / 2,
+    baseY,
+    barWidth,
+    halfWidth,
+    depth,
+    cuboidHeight,
+    points: {
+      top: { x: 0, y: -cuboidHeight - depth },
+      right: { x: halfWidth, y: -cuboidHeight },
+      front: { x: 0, y: -cuboidHeight + depth },
+      left: { x: -halfWidth, y: -cuboidHeight },
+      bottomRight: { x: halfWidth, y: 0 },
+      bottomFront: { x: 0, y: depth },
+      bottomLeft: { x: -halfWidth, y: 0 },
+    },
+  };
+}
+
+function traceWaxFace(context, points, bulge = 0) {
+  const center = points.reduce(
+    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
+    { x: 0, y: 0 },
+  );
+  const cornerSize = Math.min(
+    14,
+    ...points.map((point, index) => {
+      const next = points[(index + 1) % points.length];
+      return Math.hypot(next.x - point.x, next.y - point.y) * 0.17;
+    }),
+  );
+  const corners = points.map((point, index) => {
+    const previous = points[(index + points.length - 1) % points.length];
+    const next = points[(index + 1) % points.length];
+    const previousLength = Math.hypot(previous.x - point.x, previous.y - point.y) || 1;
+    const nextLength = Math.hypot(next.x - point.x, next.y - point.y) || 1;
+    return {
+      point,
+      start: {
+        x: point.x + ((previous.x - point.x) / previousLength) * cornerSize,
+        y: point.y + ((previous.y - point.y) / previousLength) * cornerSize,
+      },
+      end: {
+        x: point.x + ((next.x - point.x) / nextLength) * cornerSize,
+        y: point.y + ((next.y - point.y) / nextLength) * cornerSize,
+      },
+    };
+  });
+
+  context.beginPath();
+  context.moveTo(corners[0].start.x, corners[0].start.y);
+  corners.forEach((corner, index) => {
+    const nextCorner = corners[(index + 1) % corners.length];
+    context.quadraticCurveTo(corner.point.x, corner.point.y, corner.end.x, corner.end.y);
+    const midpoint = {
+      x: (corner.point.x + nextCorner.point.x) / 2,
+      y: (corner.point.y + nextCorner.point.y) / 2,
+    };
+    const outwardX = midpoint.x - center.x;
+    const outwardY = midpoint.y - center.y;
+    const outwardLength = Math.hypot(outwardX, outwardY) || 1;
+    context.quadraticCurveTo(
+      midpoint.x + (outwardX / outwardLength) * bulge,
+      midpoint.y + (outwardY / outwardLength) * bulge,
+      nextCorner.start.x,
+      nextCorner.start.y,
+    );
+  });
+  context.closePath();
+}
+
+function traceWaxCuboid(context, points, bulge = 0) {
+  traceWaxFace(context, [
+    points.top,
+    points.right,
+    points.bottomRight,
+    points.bottomFront,
+    points.bottomLeft,
+    points.left,
+  ], bulge);
+}
+
+function traceWaxCrack(context, points, offsetX = 0, offsetY = 0) {
+  if (!points.length) return;
+  context.beginPath();
+  context.moveTo(points[0].x + offsetX, points[0].y + offsetY);
+  points.slice(1).forEach((point) => {
+    context.lineTo(point.x + offsetX, point.y + offsetY);
+  });
+}
+
+function drawWaxCuboid(now = performance.now()) {
+  if (!slimeContext || !asmrCanvas) return;
+  const geometry = getWaxGeometry();
+  const {
+    width, height, centerX, baseY, barWidth, halfWidth, depth, cuboidHeight, points,
+  } = geometry;
+  if (!width || !height || !barWidth) return;
+  const palette = getWaxPalette();
+  const scaleX = 1 + waxCrackState.squish * 0.05;
+  const scaleY = 1 - waxCrackState.squish * 0.08;
+  slimeContext.clearRect(0, 0, width, height);
+
+  slimeContext.save();
+  slimeContext.translate(centerX, baseY + depth * 0.45);
+  slimeContext.scale(1 + waxCrackState.squish * 0.04, 0.3);
+  const shadow = slimeContext.createRadialGradient(0, 0, halfWidth * 0.08, 0, 0, halfWidth * 1.65);
+  shadow.addColorStop(0, "rgba(64, 46, 20, 0.28)");
+  shadow.addColorStop(0.58, "rgba(64, 46, 20, 0.15)");
+  shadow.addColorStop(1, "rgba(64, 46, 20, 0)");
+  slimeContext.fillStyle = shadow;
+  slimeContext.beginPath();
+  slimeContext.ellipse(0, 0, halfWidth * 1.52, depth * 0.66, 0, 0, Math.PI * 2);
+  slimeContext.fill();
+  slimeContext.restore();
+
+  slimeContext.save();
+  slimeContext.translate(centerX, baseY);
+  slimeContext.scale(scaleX, scaleY);
+  const { top, right, front, left, bottomRight, bottomFront, bottomLeft } = points;
+
+  traceWaxFace(slimeContext, [front, right, bottomRight, bottomFront], 5);
+  const sideGradient = slimeContext.createLinearGradient(0, -cuboidHeight, halfWidth, depth);
+  sideGradient.addColorStop(0, palette.front);
+  sideGradient.addColorStop(0.5, palette.side);
+  sideGradient.addColorStop(1, palette.edge);
+  slimeContext.fillStyle = sideGradient;
+  slimeContext.fill();
+
+  traceWaxFace(slimeContext, [left, front, bottomFront, bottomLeft], 5);
+  const frontGradient = slimeContext.createLinearGradient(-halfWidth, -cuboidHeight, 0, depth);
+  frontGradient.addColorStop(0, palette.front);
+  frontGradient.addColorStop(0.72, palette.front);
+  frontGradient.addColorStop(1, palette.side);
+  slimeContext.fillStyle = frontGradient;
+  slimeContext.fill();
+
+  traceWaxFace(slimeContext, [top, right, front, left], 4);
+  const topGradient = slimeContext.createLinearGradient(-halfWidth, -cuboidHeight - depth, halfWidth, -cuboidHeight + depth);
+  topGradient.addColorStop(0, "#FFFDF1");
+  topGradient.addColorStop(0.44, palette.top);
+  topGradient.addColorStop(1, palette.front);
+  slimeContext.fillStyle = topGradient;
+  slimeContext.fill();
+
+  slimeContext.save();
+  traceWaxFace(slimeContext, [top, right, front, left], 4);
+  slimeContext.clip();
+  const sheen = slimeContext.createRadialGradient(
+    -halfWidth * 0.36,
+    -cuboidHeight - depth * 0.76,
+    1,
+    -halfWidth * 0.36,
+    -cuboidHeight - depth * 0.76,
+    halfWidth * 1.2,
+  );
+  sheen.addColorStop(0, "rgba(255, 255, 255, 0.65)");
+  sheen.addColorStop(1, "rgba(255, 255, 255, 0)");
+  slimeContext.fillStyle = sheen;
+  slimeContext.fillRect(-halfWidth * 1.5, -cuboidHeight - depth * 1.5, halfWidth * 3, depth * 3);
+  slimeContext.beginPath();
+  slimeContext.moveTo(-halfWidth * 0.67, -cuboidHeight - depth * 0.75);
+  slimeContext.quadraticCurveTo(-halfWidth * 0.44, -cuboidHeight - depth * 1.04, -halfWidth * 0.1, -cuboidHeight - depth * 0.82);
+  slimeContext.strokeStyle = "rgba(255, 255, 255, 0.95)";
+  slimeContext.lineWidth = Math.max(2, barWidth * 0.016);
+  slimeContext.lineCap = "round";
+  slimeContext.stroke();
+  slimeContext.restore();
+
+  const outline = [ [front, right, bottomRight, bottomFront], [left, front, bottomFront, bottomLeft], [top, right, front, left] ];
+  slimeContext.strokeStyle = `${palette.edge}70`;
+  slimeContext.lineWidth = 1.5;
+  outline.forEach((face) => {
+    traceWaxFace(slimeContext, face, 4);
+    slimeContext.stroke();
+  });
+
+  if (waxCrackState.groups.length) {
+    traceWaxCuboid(slimeContext, points, 5);
+    slimeContext.clip();
+    waxCrackState.groups.forEach((group) => {
+      const elapsed = now - group.createdAt;
+      const opacity = 1 - clampSlimeValue((elapsed - 2200) / 800, 0, 1);
+      if (opacity <= 0) return;
+      slimeContext.save();
+      slimeContext.globalAlpha = opacity;
+      group.paths.forEach((crack) => {
+        [crack.main, ...crack.branches].forEach((path) => {
+          traceWaxCrack(slimeContext, path);
+          slimeContext.strokeStyle = "rgba(255, 255, 255, 0.7)";
+          slimeContext.lineWidth = 2.6;
+          slimeContext.lineCap = "round";
+          slimeContext.lineJoin = "round";
+          slimeContext.stroke();
+          traceWaxCrack(slimeContext, path, 1, 1);
+          slimeContext.strokeStyle = "#6b4c1e";
+          slimeContext.lineWidth = 1;
+          slimeContext.stroke();
+        });
+      });
+      slimeContext.restore();
+    });
+  }
+  slimeContext.restore();
+}
+
+function pointInWaxCuboid(x, y) {
+  const geometry = getWaxGeometry();
+  const localX = x - geometry.centerX;
+  const localY = y - geometry.baseY;
+  const points = [
+    geometry.points.top,
+    geometry.points.right,
+    geometry.points.bottomRight,
+    geometry.points.bottomFront,
+    geometry.points.bottomLeft,
+    geometry.points.left,
+  ];
+  let inside = false;
+  for (let index = 0, previous = points.length - 1; index < points.length; previous = index, index += 1) {
+    const currentPoint = points[index];
+    const previousPoint = points[previous];
+    const crosses = (currentPoint.y > localY) !== (previousPoint.y > localY)
+      && localX < ((previousPoint.x - currentPoint.x) * (localY - currentPoint.y))
+        / (previousPoint.y - currentPoint.y) + currentPoint.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function makeJaggedWaxPath(origin, angle, length, steps) {
+  const points = [{ x: origin.x, y: origin.y }];
+  let current = points[0];
+  let direction = angle;
+  for (let index = 0; index < steps; index += 1) {
+    direction += (Math.random() - 0.5) * 0.56;
+    const segmentLength = (length / steps) * (0.78 + Math.random() * 0.44);
+    current = {
+      x: current.x + Math.cos(direction) * segmentLength,
+      y: current.y + Math.sin(direction) * segmentLength,
+    };
+    points.push(current);
+  }
+  return points;
+}
+
+function createWaxCracks(origin, geometry, velocity) {
+  const branchCount = 5 + Math.round(velocity * 2);
+  const length = geometry.barWidth * (0.16 + velocity * 0.15);
+  const paths = [];
+  for (let index = 0; index < branchCount; index += 1) {
+    const angle = (Math.PI * 2 * index) / branchCount + (Math.random() - 0.5) * 0.24;
+    const steps = 5 + Math.floor(Math.random() * 3);
+    const mainPath = makeJaggedWaxPath(origin, angle, length, steps);
+    const branchIndex = 2 + Math.floor(Math.random() * Math.max(1, steps - 3));
+    const branchOrigin = mainPath[Math.min(branchIndex, mainPath.length - 2)];
+    const branchDirection = angle + (Math.random() < 0.5 ? -1 : 1) * (0.58 + Math.random() * 0.76);
+    paths.push({
+      main: mainPath,
+      branches: [makeJaggedWaxPath(
+        branchOrigin,
+        branchDirection,
+        length * (0.3 + Math.random() * 0.2),
+        Math.max(3, Math.round(steps * 0.6)),
+      )],
+    });
+  }
+  return paths;
+}
+
+function prepareWaxCrackAudio() {
+  if (waxCrackState.audioTemplate) return;
+  waxCrackState.audioTemplate = new Audio("assets/wax-crack.mp3");
+  waxCrackState.audioTemplate.preload = "auto";
+  waxCrackState.audioTemplate.addEventListener("error", () => {
+    console.error("Unable to load the Wax sound at assets/wax-crack.mp3.", waxCrackState.audioTemplate.error);
+  }, { once: true });
+  waxCrackState.audioTemplate.load();
+}
+
+function playWaxCrackSound() {
+  prepareWaxCrackAudio();
+  const audio = waxCrackState.audioTemplate.cloneNode();
+  const volume = Number(window.currentVolume);
+  audio.volume = clampSlimeValue(Number.isFinite(volume) ? volume : 0, 0, 100) / 100;
+  audio.preload = "auto";
+  waxCrackState.activeAudio.add(audio);
+  const releaseAudio = () => waxCrackState.activeAudio.delete(audio);
+  audio.addEventListener("ended", releaseAudio, { once: true });
+  audio.addEventListener("error", () => {
+    releaseAudio();
+    console.error("Unable to play the Wax sound at assets/wax-crack.mp3.", audio.error);
+  }, { once: true });
+  const playback = audio.play();
+  playback?.catch((error) => {
+    releaseAudio();
+    if (error.name !== "AbortError") {
+      console.error("Unable to play the Wax sound at assets/wax-crack.mp3.", error);
+    }
+  });
+  return audio;
+}
+
+function handleWaxPointerDown(event) {
+  if (!pointInWaxCuboid(event.offsetX, event.offsetY)) return;
+  event.preventDefault();
+  waxCrackState.squish = 1;
+  waxCrackState.squishVelocity = 0;
+  const geometry = getWaxGeometry();
+  const velocity = clampSlimeValue(Number(window.currentVelocity) || 0, 0, 100) / 100;
+  const group = {
+    createdAt: performance.now(),
+    paths: createWaxCracks(
+      { x: event.offsetX - geometry.centerX, y: event.offsetY - geometry.baseY },
+      geometry,
+      velocity,
+    ),
+  };
+  waxCrackState.groups.push(group);
+  playWaxCrackSound();
+  drawWaxCuboid();
+
+  const timer = window.setTimeout(() => {
+    waxCrackState.groups = waxCrackState.groups.filter((activeGroup) => activeGroup !== group);
+    waxCrackState.healTimers.delete(timer);
+    if (waxCrackState.active) drawWaxCuboid();
+  }, 3000);
+  waxCrackState.healTimers.add(timer);
+}
+
+function animateWaxCuboid(now) {
+  waxCrackState.frame = 0;
+  if (!waxCrackState.active) return;
+  const elapsed = waxCrackState.lastFrame
+    ? Math.min((now - waxCrackState.lastFrame) / 1000, 0.05)
+    : 1 / 60;
+  waxCrackState.lastFrame = now;
+  waxCrackState.squishVelocity += (-waxCrackState.squish * 180 - waxCrackState.squishVelocity * 26.83) * elapsed;
+  waxCrackState.squish = clampSlimeValue(
+    waxCrackState.squish + waxCrackState.squishVelocity * elapsed,
+    0,
+    1,
+  );
+  if (waxCrackState.squish < 0.001 && Math.abs(waxCrackState.squishVelocity) < 0.01) {
+    waxCrackState.squish = 0;
+    waxCrackState.squishVelocity = 0;
+  }
+  drawWaxCuboid(now);
+  waxCrackState.frame = window.requestAnimationFrame(animateWaxCuboid);
+}
+
+function startWaxMode() {
+  if (
+    !asmrCanvas
+    || !slimeContext
+    || window.activeAsmrObject !== "wax"
+    || workspaceShell.dataset.page !== "asmr"
+    || waxCrackState.active
+  ) return;
+  resizeAsmrCanvas();
+  prepareWaxCrackAudio();
+  waxCrackState.active = true;
+  waxCrackState.lastFrame = 0;
+  asmrCanvas.addEventListener("pointerdown", handleWaxPointerDown);
+  waxCrackState.frame = window.requestAnimationFrame(animateWaxCuboid);
+}
+
+function stopWaxMode() {
+  if (!asmrCanvas) return;
+  waxCrackState.active = false;
+  if (waxCrackState.frame) {
+    window.cancelAnimationFrame(waxCrackState.frame);
+    waxCrackState.frame = 0;
+  }
+  asmrCanvas.removeEventListener("pointerdown", handleWaxPointerDown);
+  waxCrackState.healTimers.forEach((timer) => window.clearTimeout(timer));
+  waxCrackState.healTimers.clear();
+  waxCrackState.groups = [];
+  waxCrackState.squish = 0;
+  waxCrackState.squishVelocity = 0;
+  waxCrackState.lastFrame = 0;
+  waxCrackState.activeAudio.forEach((audio) => {
+    audio.pause();
+    if (audio.readyState > 0) audio.currentTime = 0;
+  });
+  waxCrackState.activeAudio.clear();
+  if (waxCrackState.audioTemplate) {
+    waxCrackState.audioTemplate.pause();
+    if (waxCrackState.audioTemplate.readyState > 0) waxCrackState.audioTemplate.currentTime = 0;
+  }
+  if (slimeContext) {
+    slimeContext.save();
+    slimeContext.setTransform(1, 0, 0, 1, 0, 0);
+    slimeContext.clearRect(0, 0, asmrCanvas.width, asmrCanvas.height);
+    slimeContext.restore();
+  }
+}
+
+window.startWaxMode = startWaxMode;
+window.stopWaxMode = stopWaxMode;
+window.playWaxCrackSound = playWaxCrackSound;
+
+function stopAsmrCanvasModes() {
+  stopSlimeMode();
+  stopNeedohMode();
+  if (typeof window.stopWaxMode === "function") window.stopWaxMode();
+}
+
+function startAsmrCanvasMode(objectName) {
+  stopAsmrCanvasModes();
+  if (objectName === "slime") startSlimeMode();
+  if (objectName === "needoh") startNeedohMode();
+  if (objectName === "wax" && typeof window.startWaxMode === "function") window.startWaxMode();
+}
+
+window.addEventListener("littleorbit:asmr-object-change", (event) => {
+  const objectName = workspaceShell.dataset.page === "asmr" ? event.detail.objectName : "";
+  startAsmrCanvasMode(objectName);
+});
+window.addEventListener("littleorbit:workspace-page-change", (event) => {
+  const objectName = event.detail.pageName === "asmr" ? window.activeAsmrObject : "";
+  startAsmrCanvasMode(objectName);
+});
+window.addEventListener("littleorbit:asmr-parameter-change", (event) => {
+  if (event.detail.objectName === "slime" && event.detail.parameter === "volume" && slimeAudio) {
+    const volume = Number(event.detail.value);
+    slimeAudio.volume = clampSlimeValue(Number.isFinite(volume) ? volume : 0, 0, 100) / 100;
+  }
+  if (event.detail.objectName === "needoh" && event.detail.parameter === "volume") {
+    syncNeedohAudioVolume();
+  }
+  if (event.detail.objectName === "wax" && event.detail.parameter === "volume") {
+    const volume = Number(event.detail.value);
+    const normalizedVolume = clampSlimeValue(Number.isFinite(volume) ? volume : 0, 0, 100) / 100;
+    if (waxCrackState.audioTemplate) waxCrackState.audioTemplate.volume = normalizedVolume;
+    waxCrackState.activeAudio.forEach((audio) => {
+      audio.volume = normalizedVolume;
+    });
+  }
+});
 
 if (asmrCanvas && "ResizeObserver" in window) {
   new ResizeObserver(resizeAsmrCanvas).observe(asmrCanvas);
