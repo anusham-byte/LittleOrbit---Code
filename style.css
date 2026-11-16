@@ -10043,39 +10043,52 @@ p {
   color: #FFFFFF;
 }
 
-/* Retro Wellness Portal: soften the warm studio palette with a cool, airy support space. */
-[data-theme="retro-fun"] #workspace-wellness .wellness-portal__topics {
-  background: #DCEEF3;
-  border-color: #7BA7B5;
+/* Retro Wellness Portal: restore the warm background with navy controls and teal image containers. */
+[data-theme="retro-fun"] #workspace-wellness .wellness-portal,
+[data-theme="retro-fun"] #workspace-wellness .wellness-portal__topics,
+[data-theme="retro-fun"] #workspace-wellness .wellness-portal__content {
+  background: #FFEDD1;
 }
 
-[data-theme="retro-fun"] #workspace-wellness .wellness-portal__content {
-  background: #EAF6F8;
+[data-theme="retro-fun"] #workspace-wellness .wellness-portal__topics {
+  border-color: #457E78;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic {
-  border-color: #C5B56E;
-  background: #FFF1B8;
-  color: #344B6B;
+  border-color: #457E78;
+  background: #344B6B;
+  color: #FFFFFF;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic__text {
+  color: #FFFFFF;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic__image {
-  border-color: #7BA7B5;
-  background: #F7FCFD;
+  border-color: #457E78;
+  background: #457E78;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic__image img {
+  filter: brightness(0) invert(1);
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic:hover,
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic:focus-visible {
-  background: #FFE99A;
+  background: #457E78;
   box-shadow: 0 9px 22px rgb(52 75 107 / 14%);
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic.is-active {
-  border-color: #7BA7B5;
-  background: #D7EDF2;
+  border-color: #344B6B;
+  background: #457E78;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-welcome {
-  border-color: #7BA7B5;
-  background: #F3FBFD;
+  border-color: #457E78;
+  background: #FFEDD1;
+}
+
+[data-theme="retro-fun"] .workspace-header {
+  background: #FFF8EE;
 }
