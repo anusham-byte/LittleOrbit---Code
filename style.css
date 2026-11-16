@@ -9194,7 +9194,7 @@ p {
 
 .wellness-topic__text {
   color: var(--color-text);
-  font: 700 clamp(16px, 1.55vw, 23px)/1.2 var(--font-family-subheading);
+  font: 700 var(--font-size-subheading)/1.2 var(--font-family-subheading);
   transition: color 180ms ease, text-align 180ms ease;
 }
 
@@ -9940,7 +9940,7 @@ p {
   }
 
   .wellness-topic__text {
-    font-size: clamp(13px, 2.5vw, 17px);
+    font-size: var(--font-size-subheading);
     text-align: left;
   }
 
@@ -10056,37 +10056,41 @@ p {
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic {
   border-color: #457E78;
-  background: #344B6B;
-  color: #FFFFFF;
+  background: #F6AF21;
+  color: #344B6B;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic__text {
-  color: #FFFFFF;
+  color: #344B6B;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic__image {
   border-color: #457E78;
-  background: #457E78;
+  background: #FFF8EE;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic__image img {
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic:hover,
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic:focus-visible {
-  background: #457E78;
+  background: #F6AF21;
   box-shadow: 0 9px 22px rgb(52 75 107 / 14%);
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-topic.is-active {
-  border-color: #344B6B;
-  background: #457E78;
+  border-color: #457E78;
+  background: #F6AF21;
 }
 
 [data-theme="retro-fun"] #workspace-wellness .wellness-welcome {
   border-color: #457E78;
-  background: #FFEDD1;
+  background: #FFF8EE;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-welcome img {
+  background: #FFF8EE;
 }
 
 [data-theme="retro-fun"] .workspace-header {
