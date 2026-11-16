@@ -23,9 +23,83 @@ const typographyOptions = {
   body: ["Grandstander", "Sniglet", "Share Tech Mono"],
 };
 const typographySelects = document.querySelectorAll("[data-font-setting]");
+const registeredAccountsStorageKey = "registeredAccounts";
+const testAccountCleanupStorageKey = "littleOrbitTestAccountCleanupV1";
 
 function accountStorageKey(username) {
-  return String(username || "").trim().toLowerCase();
+  return `littleOrbitAccount:${String(username || "").trim()}`;
+}
+
+function readRegisteredAccounts() {
+  try {
+    const accounts = JSON.parse(localStorage.getItem(registeredAccountsStorageKey) || "[]");
+    return Array.isArray(accounts)
+      ? accounts.filter((account) => account && typeof account.username === "string")
+      : [];
+  } catch (error) {
+    console.error("Unable to read Little Orbit registered accounts.", error);
+    return [];
+  }
+}
+
+function writeRegisteredAccounts(accounts) {
+  localStorage.setItem(registeredAccountsStorageKey, JSON.stringify(accounts));
+}
+
+function findRegisteredAccount(username) {
+  return readRegisteredAccounts().find((account) => account.username === username) || null;
+}
+
+function upsertRegisteredAccount(user, previousUsername = "") {
+  const accounts = readRegisteredAccounts().filter((account) =>
+    account.username !== previousUsername && account.username !== user.username,
+  );
+  accounts.push(user);
+  writeRegisteredAccounts(accounts);
+}
+
+function migrateLegacyRegisteredAccounts() {
+  const accounts = readRegisteredAccounts();
+  const knownUsernames = new Set(accounts.map((account) => account.username));
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key || key === registeredAccountsStorageKey || key.startsWith("littleOrbitAccount:")) continue;
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || "null");
+      if (value && typeof value.username === "string" && typeof value.password === "string" && !knownUsernames.has(value.username)) {
+        accounts.push(value);
+        knownUsernames.add(value.username);
+      }
+    } catch {
+      // Non-account localStorage entries are expected.
+    }
+  }
+  if (accounts.length) writeRegisteredAccounts(accounts);
+}
+
+function resetAllTestAccounts(testUsernames = ["OrbitTester", "RenamedUser"]) {
+  const names = new Set(testUsernames);
+  const accounts = readRegisteredAccounts().filter((account) => !names.has(account.username));
+  writeRegisteredAccounts(accounts);
+  names.forEach((username) => {
+    localStorage.removeItem(accountStorageKey(username));
+    localStorage.removeItem(String(username).trim().toLowerCase());
+    localStorage.removeItem(emotionStateKey(username));
+    localStorage.removeItem(`${journalEntriesStorageKey}:${accountStorageKey(username)}`);
+    localStorage.removeItem(`${journalEntriesStorageKey}:${String(username).trim().toLowerCase()}`);
+    sessionStorage.removeItem(`currentUsername`);
+  });
+  if (names.has(sessionStorage.getItem("currentUsername"))) {
+    sessionStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("currentUsername");
+  }
+  return accounts;
+}
+
+migrateLegacyRegisteredAccounts();
+if (!localStorage.getItem(testAccountCleanupStorageKey)) {
+  resetAllTestAccounts();
+  localStorage.setItem(testAccountCleanupStorageKey, "complete");
 }
 
 function applyTypography(settings = typographyDefaults) {
@@ -599,6 +673,7 @@ function renderAccountPanel() {
 function saveActiveUser() {
   try {
     localStorage.setItem(accountStorageKey(activeUser.username), JSON.stringify(activeUser));
+    upsertRegisteredAccount(activeUser);
   } catch (error) {
     accountProfilePictureMessage.textContent = "This change could not be saved in this browser.";
     accountProfilePictureMessage.dataset.state = "error";
@@ -797,8 +872,8 @@ function saveAccountEditor(action) {
     const previousUsername = activeUser.username;
     const previousKey = accountStorageKey(previousUsername);
     const nextKey = accountStorageKey(nextUsername);
-    if (nextKey !== previousKey && localStorage.getItem(nextKey) !== null) {
-      input.setCustomValidity("That username is already taken.");
+    if (nextUsername !== previousUsername && findRegisteredAccount(nextUsername)) {
+      input.setCustomValidity("That exact username is already taken.");
       input.reportValidity();
       return;
     }
@@ -807,6 +882,7 @@ function saveAccountEditor(action) {
       moveScopedAccountData(previousUsername, nextUsername);
       localStorage.setItem(nextKey, JSON.stringify(activeUser));
       if (nextKey !== previousKey) localStorage.removeItem(previousKey);
+      upsertRegisteredAccount(activeUser, previousUsername);
       saveActiveUser();
     } catch (error) {
       activeUser.username = previousUsername;
@@ -847,6 +923,7 @@ function deleteActiveAccount() {
   const identity = activeUser.email || username;
   try {
     localStorage.removeItem(accountStorageKey(username));
+    writeRegisteredAccounts(readRegisteredAccounts().filter((account) => account.username !== username));
     localStorage.removeItem(emotionStateKey(username));
     localStorage.removeItem(journalEntriesKey(activeUser));
     localStorage.removeItem(`${personalRoutineStorageKey}:${identity.toLowerCase()}`);
@@ -996,6 +1073,7 @@ function enterWorkspace(user, { restoreSession = false } = {}) {
     user.theme = workspaceTheme;
     try {
       localStorage.setItem(accountStorageKey(user.username), JSON.stringify(user));
+      upsertRegisteredAccount(user);
     } catch (error) {
       console.error("Unable to save the default Little Orbit workspace theme.", error);
     }
@@ -6248,7 +6326,6 @@ function handleSignUp(event) {
     return;
   }
   const username = signupUsername.value.trim();
-  const usernameKey = accountStorageKey(username);
   const user = {
     username,
     email: signupEmail.value.trim(),
@@ -6259,14 +6336,15 @@ function handleSignUp(event) {
     theme: "mint-chocolate",
   };
   try {
-    if (localStorage.getItem(usernameKey) !== null) {
+    if (findRegisteredAccount(username)) {
       showSignupStep(2);
-      signupUsername.setCustomValidity("That username is already taken. Please choose another.");
+      signupUsername.setCustomValidity("That exact username is already taken. Choose a different capitalization or name.");
       signupUsername.reportValidity();
       signupUsername.focus();
       return;
     }
-    localStorage.setItem(usernameKey, JSON.stringify(user));
+    localStorage.setItem(accountStorageKey(username), JSON.stringify(user));
+    upsertRegisteredAccount(user);
   } catch (error) {
     setAuthMessage(subjectMessage, "We couldn’t save your account in this browser. Check available storage and try again.", "error");
     console.error("Unable to save Little Orbit account to localStorage.", error);
@@ -6280,16 +6358,14 @@ signupForm.addEventListener("submit", handleSignUp);
 loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const username = loginForm.elements.username.value.trim();
-  const usernameKey = accountStorageKey(username);
   const password = loginForm.elements.password.value;
   if (!username || !password) {
     setAuthMessage(loginMessage, "Enter your username and password to log in.", "error");
     return;
   }
   try {
-    const storedUser = localStorage.getItem(usernameKey);
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    if (!user || accountStorageKey(user.username) !== usernameKey || user.password !== password) {
+    const user = findRegisteredAccount(username);
+    if (!user || user.username !== username || user.password !== password) {
       setAuthMessage(loginMessage, "That username and password don’t match an account saved in this browser.", "error");
       return;
     }
@@ -6400,9 +6476,8 @@ function restoreWorkspaceSession() {
     isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
     username = sessionStorage.getItem("currentUsername") || "";
     if (!isLoggedIn || !username) return;
-    const storedUser = localStorage.getItem(accountStorageKey(username));
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    if (!user || accountStorageKey(user.username) !== accountStorageKey(username)) {
+    const user = findRegisteredAccount(username);
+    if (!user || user.username !== username) {
       sessionStorage.removeItem("isLoggedIn");
       sessionStorage.removeItem("currentUsername");
       return;
