@@ -344,6 +344,9 @@ const journalPenDrawer = document.querySelector("#journal-pen-drawer");
 const journalDrawToolButtons = [...document.querySelectorAll("[data-journal-draw-tool]")];
 const journalBrushSize = document.querySelector("#journal-brush-size");
 const journalBrushSizeValue = document.querySelector("[data-journal-brush-size-value]");
+const journalBrushSizePopoverValue = document.querySelector("[data-journal-brush-size-popover-value]");
+const journalBrushSizeToggle = document.querySelector("#journal-brush-size-toggle");
+const journalBrushSizePopover = document.querySelector("#journal-brush-size-popover");
 const journalDrawingCanvas = document.querySelector("#journal-drawing-canvas");
 const journalTypingArea = document.querySelector("#canvas-typing-area");
 const journalEntryDiscardModal = document.querySelector("#journal-entry-discard-modal");
@@ -4674,7 +4677,30 @@ journalDrawToolButtons.forEach((button) => {
 });
 
 journalBrushSize?.addEventListener("input", () => {
-  if (journalBrushSizeValue) journalBrushSizeValue.value = `${journalBrushSize.value}px`;
+  const value = `${journalBrushSize.value}px`;
+  if (journalBrushSizeValue) journalBrushSizeValue.value = value;
+  if (journalBrushSizePopoverValue) journalBrushSizePopoverValue.value = value;
+});
+
+journalBrushSizeToggle?.addEventListener("click", () => {
+  const isOpen = !journalBrushSizePopover?.hidden;
+  if (!journalBrushSizePopover) return;
+  journalBrushSizePopover.hidden = isOpen;
+  journalBrushSizeToggle.setAttribute("aria-expanded", String(!isOpen));
+  if (!isOpen) journalBrushSize?.focus();
+});
+
+journalBrushSizeToggle?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  journalBrushSizeToggle.click();
+});
+
+document.addEventListener("click", (event) => {
+  if (!journalBrushSizePopover || journalBrushSizePopover.hidden) return;
+  if (event.target.closest(".journal-brush-size")) return;
+  journalBrushSizePopover.hidden = true;
+  journalBrushSizeToggle?.setAttribute("aria-expanded", "false");
 });
 
 featureExpansionDrawerCollapse?.addEventListener("click", collapseFeatureDrawer);

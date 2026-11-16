@@ -628,11 +628,14 @@
               <button class="journal-draw-tool" type="button" data-journal-draw-tool="crayon" aria-label="Crayon" title="Crayon" aria-pressed="false"><span class="journal-draw-tool__icon journal-draw-tool__icon--crayon" aria-hidden="true"></span></button>
               <button class="journal-draw-tool" type="button" data-journal-draw-tool="eraser" aria-label="Eraser" title="Eraser" aria-pressed="false"><span class="journal-draw-tool__icon journal-draw-tool__icon--eraser" aria-hidden="true"></span></button>
             </div>
-            <label class="journal-brush-size" for="journal-brush-size">
-              <span class="visually-hidden">Brush size</span>
-              <input id="journal-brush-size" type="range" min="1" max="50" value="4" aria-label="Brush size">
-              <output data-journal-brush-size-value for="journal-brush-size">4px</output>
-            </label>
+            <div class="journal-brush-size">
+              <output class="journal-brush-size__toggle" id="journal-brush-size-toggle" data-journal-brush-size-value for="journal-brush-size" role="button" tabindex="0" aria-expanded="false" aria-controls="journal-brush-size-popover">4px</output>
+              <div class="journal-brush-size__popover" id="journal-brush-size-popover" hidden>
+                <label for="journal-brush-size">Brush size</label>
+                <input id="journal-brush-size" type="range" min="1" max="50" value="4" aria-label="Brush size">
+                <output data-journal-brush-size-popover-value for="journal-brush-size">4px</output>
+              </div>
+            </div>
             <button class="journal-pen-color" type="button" data-journal-color-toggle data-journal-color-target="pen" aria-label="Drawing color" aria-expanded="false" aria-controls="journal-color-popover">
               <span class="journal-pen-color__indicator" data-journal-color-indicator="pen" aria-hidden="true"></span>
             </button>

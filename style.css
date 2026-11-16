@@ -7311,6 +7311,7 @@ body.emotion-checkin-open {
 }
 
 .journal-pen-drawer {
+  position: relative;
   display: flex;
   flex: 0 0 0;
   flex-direction: column;
@@ -7333,6 +7334,7 @@ body.emotion-checkin-open {
   padding-left: 9px;
   border-right-width: 1px;
   opacity: 1;
+  overflow: visible;
 }
 
 .journal-pen-drawer__tools {
@@ -7397,6 +7399,7 @@ body.emotion-checkin-open {
 }
 
 .journal-brush-size {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7405,18 +7408,92 @@ body.emotion-checkin-open {
   font-size: 0.72rem;
 }
 
-.journal-brush-size input {
-  width: 110px;
+.journal-brush-size__toggle {
+  display: block;
+  min-width: 54px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-container);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  line-height: 1.2;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.journal-brush-size__toggle:hover,
+.journal-brush-size__toggle:focus-visible,
+.journal-brush-size__toggle[aria-expanded="true"] {
+  border-color: var(--journal-accent);
+  background: color-mix(in srgb, var(--journal-accent) 18%, var(--color-container));
+  transform: translateY(-1px);
+}
+
+.journal-brush-size__popover {
+  position: absolute;
+  z-index: 20;
+  top: 50%;
+  left: calc(100% + 10px);
+  display: grid;
+  min-width: 170px;
+  gap: 7px;
+  padding: 11px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-container);
+  box-shadow: 0 8px 22px var(--color-shadow);
+  color: var(--color-text);
+  transform: translateY(-50%);
+}
+
+.journal-brush-size__popover[hidden] {
+  display: none;
+}
+
+.journal-brush-size__popover label {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.journal-brush-size__popover input {
+  width: 100%;
   height: 22px;
-  margin: 42px 0;
+  margin: 0;
   accent-color: var(--journal-accent);
-  direction: rtl;
-  writing-mode: vertical-lr;
+}
+
+.journal-brush-size__popover output {
+  color: var(--color-muted-accent);
+  font-size: 0.78rem;
+  text-align: right;
 }
 
 .journal-brush-size output {
   min-width: 36px;
   text-align: center;
+}
+
+.journal-brush-size__popover output {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+/* Fallback for cached pages that still render the original inline range input. */
+.journal-brush-size > input {
+  width: 96px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--journal-accent);
+  direction: ltr;
+  writing-mode: horizontal-tb;
 }
 
 .journal-pen-color {
@@ -7896,16 +7973,13 @@ body.emotion-checkin-open {
   }
 
   .journal-brush-size {
-    flex-direction: row;
     margin: 0 10px;
   }
 
-  .journal-brush-size input {
-    width: 96px;
-    height: 22px;
-    margin: 0;
-    direction: ltr;
-    writing-mode: horizontal-tb;
+  .journal-brush-size__popover {
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .feature-expansion-drawer {
@@ -9938,4 +10012,70 @@ p {
 #workspace-shell .journal-brush-size,
 #workspace-shell .journal-brush-size output {
   font-size: 0.72rem;
+}
+
+#workspace-shell .journal-brush-size > output.journal-brush-size__toggle {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+}
+
+#workspace-shell .journal-brush-size__popover output {
+  font-size: 0.78rem;
+}
+
+[data-theme="dark-academia"] .journal-page h3 {
+  color: #4A4D3D;
+}
+
+[data-theme="dark-academia"] .journal-page .journal-page__eyebrow,
+[data-theme="dark-academia"] .journal-page h2 {
+  color: #66785A;
+}
+
+[data-theme="dark-academia"] .journal-close-bottom {
+  background: #66785A;
+  color: #FFFFFF;
+}
+
+[data-theme="dark-academia"] .journal-close-bottom:hover,
+[data-theme="dark-academia"] .journal-close-bottom:focus-visible {
+  background: #4F6246;
+  color: #FFFFFF;
+}
+
+/* Retro Wellness Portal: soften the warm studio palette with a cool, airy support space. */
+[data-theme="retro-fun"] #workspace-wellness .wellness-portal__topics {
+  background: #DCEEF3;
+  border-color: #7BA7B5;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-portal__content {
+  background: #EAF6F8;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic {
+  border-color: #C5B56E;
+  background: #FFF1B8;
+  color: #344B6B;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic__image {
+  border-color: #7BA7B5;
+  background: #F7FCFD;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic:hover,
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic:focus-visible {
+  background: #FFE99A;
+  box-shadow: 0 9px 22px rgb(52 75 107 / 14%);
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-topic.is-active {
+  border-color: #7BA7B5;
+  background: #D7EDF2;
+}
+
+[data-theme="retro-fun"] #workspace-wellness .wellness-welcome {
+  border-color: #7BA7B5;
+  background: #F3FBFD;
 }
