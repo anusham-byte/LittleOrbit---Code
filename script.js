@@ -4,6 +4,7 @@ const themeToggle = document.querySelector("#theme-toggle");
 const themeLabel = themeToggle.querySelector(".theme-toggle__label");
 const themeColor = document.querySelector('meta[name="theme-color"]');
 const themeLogos = document.querySelectorAll("[data-theme-logo]");
+const breathingWidgetImages = document.querySelectorAll(".breathing-widget__gif-art");
 const settingsThemeOptions = document.querySelectorAll("[data-settings-theme]");
 const welcomeWord = document.querySelector(".workspace-welcome__word");
 const themeStorageKey = "littleOrbitTheme";
@@ -100,6 +101,30 @@ function applyTheme(theme) {
   themeLogos.forEach((logo) => {
     logo.src = isDarkAcademia ? logo.dataset.darkLogo : logo.dataset.mintLogo;
   });
+  breathingWidgetImages.forEach((image) => {
+    const artwork = {
+      "mint-chocolate": {
+        src: image.dataset.mintSrc,
+        alt: "Meditating rabbit breathing animation",
+      },
+      "dark-academia": {
+        src: image.dataset.darkSrc,
+        alt: "Books and a warm drink for a breathing break",
+      },
+      "tulip-pastel": {
+        src: image.dataset.tulipSrc,
+        alt: "Tulip flower breathing artwork",
+      },
+      "retro-fun": {
+        src: image.dataset.retroSrc,
+        alt: "Retro rainbow breathing artwork",
+      },
+    }[theme];
+    if (artwork) {
+      image.src = artwork.src;
+      image.alt = artwork.alt;
+    }
+  });
   if (welcomeWord) {
     welcomeWord.src = isDarkAcademia
       ? welcomeWord.dataset.darkWelcome
@@ -132,7 +157,10 @@ function applyTheme(theme) {
 try {
   const savedTheme = localStorage.getItem(themeStorageKey);
   const restoredTheme = savedTheme === "pastel-studio" ? "tulip-pastel" : savedTheme;
-  if (restoredTheme === "mint-chocolate" || restoredTheme === "dark-academia" || restoredTheme === "tulip-pastel") {
+  if (restoredTheme === "mint-chocolate"
+    || restoredTheme === "dark-academia"
+    || restoredTheme === "tulip-pastel"
+    || restoredTheme === "retro-fun") {
     applyTheme(restoredTheme);
   }
 } catch (error) {
@@ -228,6 +256,7 @@ const journalEntryBack = document.querySelector("#journal-entry-back");
 const journalEntryDate = document.querySelector("#journal-entry-date");
 const journalEntryTitle = document.querySelector("#journal-entry-title");
 const journalEntrySave = document.querySelector("#journal-entry-save");
+const journalImageUpload = document.querySelector("#journal-image-upload");
 const journalEntryFields = [...document.querySelectorAll("[data-entry-field]")];
 const journalFormatToolbar = document.querySelector("#journal-format-toolbar");
 const journalFontFamilySelect = document.querySelector("#journal-font-family");
@@ -247,6 +276,30 @@ const journalEntryDiscardModal = document.querySelector("#journal-entry-discard-
 const journalEntryDiscardCancel = document.querySelector("#journal-entry-discard-cancel");
 const journalEntryDiscardConfirm = document.querySelector("#journal-entry-discard-confirm");
 const journalEntryTools = [...document.querySelectorAll("[data-feature-tool]")];
+const journalPromptTexts = [
+  "Right now, the biggest thing taking up space in my head is...",
+  "One small win I had today was...",
+  "I am feeling a little overwhelmed about...",
+  "Something I am proud of myself for handling this week is...",
+  "If I could take one thing off my to-do list today, it would be...",
+  "A moment today that actually made me smile or feel calm was...",
+  "Right now, my energy level feels like...",
+  "One kind thing I need to remind myself before tomorrow is...",
+  "The hardest part of today was, and I got through it by...",
+  "Tomorrow, my main priority is simply to...",
+];
+const stickerAssets = [
+  "assets/stickers/sticker1.webp",
+  "assets/stickers/sticker2.webp",
+  "assets/stickers/sticker3.webp",
+  "assets/stickers/sticker4.webp",
+  "assets/stickers/sticker5.webp",
+  "assets/stickers/sticker6.webp",
+  "assets/stickers/sticker7.webp",
+  "assets/stickers/sticker8.webp",
+  "assets/stickers/sticker9.webp",
+  "assets/stickers/sticker10.webp",
+];
 const journalEntryToolOrder = ["prompts", "note", "stickers", "image", "pen"];
 const journalEntryToolsContainer = journalEntryTools[0]?.parentElement;
 if (journalEntryToolsContainer) {
@@ -257,6 +310,7 @@ if (journalEntryToolsContainer) {
 }
 const featureExpansionDrawer = document.querySelector("#feature-expansion-drawer");
 const featureExpansionDrawerCollapse = document.querySelector("#feature-expansion-drawer-collapse");
+const featureExpansionDrawerContent = document.querySelector(".feature-expansion-drawer__content");
 let isCanvasDirty = false;
 let journalEntryCreatedDate = "";
 let journalEntryEditingId = null;
@@ -280,6 +334,8 @@ let journalDrawingStrokes = [];
 let currentJournalStroke = null;
 const journalPreviewDrawingStrokes = new WeakMap();
 const journalPreviewStickyNotes = new WeakMap();
+const journalPreviewImages = new WeakMap();
+const journalPreviewStickers = new WeakMap();
 let stickyNoteSequence = 0;
 let activeStickyNoteInteraction = null;
 let journalDrawingResizeObserver = null;
@@ -333,6 +389,15 @@ const accountDeleteConfirmation = document.querySelector("#account-delete-confir
 const accountDeleteCancel = document.querySelector("#account-delete-cancel");
 const accountDeleteConfirm = document.querySelector("#account-delete-confirm");
 const accountActionButtons = document.querySelectorAll("[data-account-action]");
+const accountEditors = [...document.querySelectorAll("[data-account-editor]")];
+const accountGrades = ["MYP 1", "MYP 2", "MYP 3", "MYP 4", "MYP 5"];
+const accountSubjectOptions = {
+  core: ["Math", "English", "Sciences", "Design", "PHE"],
+  language: ["French", "Spanish", "Hindi"],
+  sciences: ["Chemistry", "Physics", "Biology"],
+  creative: ["Visual Arts", "Dance", "Drama", "Music"],
+  electives: ["Psychology", "Entrepreneurship", "Creative Media"],
+};
 let workspaceSettingsReturnFocus = null;
 let workspaceMainWasInert = false;
 const emotionChartSegments = document.querySelector("#emotion-chart-segments");
@@ -588,82 +653,206 @@ accountProfilePictureInput.addEventListener("change", () => {
   reader.readAsDataURL(file);
 });
 
-function editAccountValue(action) {
+function closeAccountEditors() {
+  accountEditors.forEach((editor) => {
+    editor.hidden = true;
+    editor.replaceChildren();
+  });
+}
+
+function accountEditorActions(action) {
+  const actions = document.createElement("div");
+  actions.className = "account-inline-editor__actions";
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = "account-action-button";
+  save.dataset.accountEditorSave = action;
+  save.textContent = "Save";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "account-action-button account-action-button--muted";
+  cancel.dataset.accountEditorCancel = action;
+  cancel.textContent = "Cancel";
+  actions.append(save, cancel);
+  return actions;
+}
+
+function createAccountSubjectEditor() {
+  const wrapper = document.createElement("div");
+  wrapper.className = "account-subject-editor";
+  const subjectGroups = activeUser.grade === "MYP 4" || activeUser.grade === "MYP 5"
+    ? [
+      ["Core", ["Math", "English"]],
+      ["Sciences", accountSubjectOptions.sciences],
+      ["E-Portfolio", ["Design", ...accountSubjectOptions.creative, "PHE"].filter((subject, index, list) => list.indexOf(subject) === index)],
+      ["Language Acquisition", accountSubjectOptions.language],
+      ["Electives", accountSubjectOptions.electives],
+    ]
+    : [
+      ["Core", accountSubjectOptions.core],
+      ["Language Acquisition", accountSubjectOptions.language],
+      ["Arts", accountSubjectOptions.creative],
+    ];
+  const selected = new Set(Array.isArray(activeUser.subjects) ? activeUser.subjects : []);
+  subjectGroups.forEach(([title, options]) => {
+    const group = document.createElement("fieldset");
+    const legend = document.createElement("legend");
+    legend.textContent = title;
+    const grid = document.createElement("div");
+    grid.className = "account-subject-editor__grid";
+    options.forEach((subject) => {
+      const label = document.createElement("label");
+      label.className = "account-subject-option";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = subject;
+      checkbox.checked = selected.has(subject);
+      const text = document.createElement("span");
+      text.textContent = subject;
+      label.append(checkbox, text);
+      grid.append(label);
+    });
+    group.append(legend, grid);
+    wrapper.append(group);
+  });
+  return wrapper;
+}
+
+function openAccountEditor(action) {
   if (!activeUser) return;
+  closeAccountEditors();
+  const editor = accountEditors.find((candidate) => candidate.dataset.accountEditor === action);
+  if (!editor) return;
+  editor.hidden = false;
   if (action === "username") {
-    const nextUsername = window.prompt("Choose a new username.", activeUser.username)?.trim();
-    if (!nextUsername || nextUsername === activeUser.username) return;
-    if (!/^[A-Za-z0-9._+-]{3,32}$/.test(nextUsername)) {
-      window.alert("Use 3–32 letters, numbers, dots, underscores, plus signs, or hyphens.");
-      return;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "account-inline-editor__input";
+    input.value = activeUser.username;
+    input.maxLength = 32;
+    input.autocomplete = "username";
+    input.setAttribute("aria-label", "New username");
+    editor.append(input, accountEditorActions(action));
+    input.focus();
+    input.select();
+  } else if (action === "password") {
+    const field = document.createElement("div");
+    field.className = "account-password-editor";
+    const input = document.createElement("input");
+    input.type = "password";
+    input.className = "account-inline-editor__input";
+    input.placeholder = "Enter a new password";
+    input.autocomplete = "new-password";
+    input.setAttribute("aria-label", "New password");
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "account-password-editor__toggle";
+    toggle.textContent = "Show";
+    toggle.addEventListener("click", () => {
+      input.type = input.type === "password" ? "text" : "password";
+      toggle.textContent = input.type === "password" ? "Show" : "Hide";
+    });
+    field.append(input, toggle);
+    editor.append(field, accountEditorActions(action));
+    input.focus();
+  } else if (action === "grade") {
+    const select = document.createElement("select");
+    select.className = "account-inline-editor__input";
+    select.setAttribute("aria-label", "Grade");
+    accountGrades.forEach((grade) => select.append(new Option(grade, grade, false, grade === activeUser.grade)));
+    editor.append(select, accountEditorActions(action));
+    select.focus();
+  } else if (action === "subjects") {
+    editor.append(createAccountSubjectEditor(), accountEditorActions(action));
+    editor.querySelector("input")?.focus();
+  }
+}
+
+function moveScopedAccountData(previousUsername, nextUsername) {
+  const moves = [
+    [emotionStateKey(previousUsername), emotionStateKey(nextUsername)],
+    [journalEntriesKey({ username: previousUsername }), journalEntriesKey({ username: nextUsername })],
+  ];
+  moves.forEach(([oldKey, newKey]) => {
+    const value = localStorage.getItem(oldKey);
+    if (value !== null) {
+      localStorage.setItem(newKey, value);
+      localStorage.removeItem(oldKey);
     }
-    const previousStorageKey = accountStorageKey(activeUser.username);
-    const nextStorageKey = accountStorageKey(nextUsername);
-    if (nextStorageKey !== previousStorageKey && localStorage.getItem(nextStorageKey) !== null) {
-      window.alert("That username is already taken. Please choose another.");
+  });
+}
+
+function saveAccountEditor(action) {
+  if (!activeUser) return;
+  const editor = accountEditors.find((candidate) => candidate.dataset.accountEditor === action);
+  if (!editor) return;
+  if (action === "username") {
+    const input = editor.querySelector("input");
+    const nextUsername = input.value.trim();
+    if (!/^[A-Za-z0-9._+-]{3,32}$/.test(nextUsername)) {
+      input.setCustomValidity("Use 3–32 letters, numbers, dots, underscores, plus signs, or hyphens.");
+      input.reportValidity();
       return;
     }
     const previousUsername = activeUser.username;
+    const previousKey = accountStorageKey(previousUsername);
+    const nextKey = accountStorageKey(nextUsername);
+    if (nextKey !== previousKey && localStorage.getItem(nextKey) !== null) {
+      input.setCustomValidity("That username is already taken.");
+      input.reportValidity();
+      return;
+    }
     activeUser.username = nextUsername;
-    localStorage.setItem(nextStorageKey, JSON.stringify(activeUser));
-    if (nextStorageKey !== previousStorageKey) {
-      localStorage.removeItem(previousStorageKey);
-    }
     try {
-      const oldEmotionKey = emotionStateKey(previousUsername);
-      const emotionState = localStorage.getItem(oldEmotionKey);
-      if (emotionState) {
-        localStorage.setItem(emotionStateKey(nextUsername), emotionState);
-        localStorage.removeItem(oldEmotionKey);
-      }
+      moveScopedAccountData(previousUsername, nextUsername);
+      localStorage.setItem(nextKey, JSON.stringify(activeUser));
+      if (nextKey !== previousKey) localStorage.removeItem(previousKey);
+      saveActiveUser();
     } catch (error) {
-      console.error("Unable to move Little Orbit emotion history to the new username.", error);
-    }
-    saveActiveUser();
-    return;
-  }
-  if (action === "password") {
-    const nextPassword = window.prompt("Enter a new password (at least 6 characters).");
-    if (nextPassword === null) return;
-    if (nextPassword.length < 6) {
-      window.alert("Your password must be at least 6 characters long.");
+      activeUser.username = previousUsername;
+      console.error("Unable to save the updated Little Orbit username.", error);
+      accountProfilePictureMessage.textContent = "This change could not be saved in this browser.";
+      accountProfilePictureMessage.dataset.state = "error";
       return;
     }
-    activeUser.password = nextPassword;
-    saveActiveUser();
-    return;
-  }
-  if (action === "grade") {
-    const grades = ["MYP 1", "MYP 2", "MYP 3", "MYP 4", "MYP 5"];
-    const nextGrade = window.prompt(`Choose a grade: ${grades.join(", ")}`, activeUser.grade || "")?.trim();
-    if (!nextGrade || !grades.includes(nextGrade)) {
-      if (nextGrade) window.alert("Please enter one of the listed MYP grades.");
+  } else if (action === "password") {
+    const input = editor.querySelector("input");
+    if (!input.value) {
+      input.setCustomValidity("Password cannot be empty.");
+      input.reportValidity();
       return;
     }
-    activeUser.grade = nextGrade;
-    saveActiveUser();
-    return;
-  }
-  if (action === "subjects") {
-    const currentSubjects = Array.isArray(activeUser.subjects) ? activeUser.subjects.join(", ") : "";
-    const nextSubjects = window.prompt("Enter subjects separated by commas.", currentSubjects);
-    if (nextSubjects === null) return;
-    const subjects = nextSubjects.split(",").map((subject) => subject.trim()).filter(Boolean);
-    if (subjects.length === 0) {
-      window.alert("Keep at least one subject selected.");
+    activeUser.password = input.value;
+    if (!saveActiveUser()) return;
+  } else if (action === "grade") {
+    activeUser.grade = editor.querySelector("select").value;
+    if (!saveActiveUser()) return;
+  } else if (action === "subjects") {
+    const subjects = [...editor.querySelectorAll("input:checked")].map((input) => input.value);
+    if (!subjects.length) {
+      window.alert("Choose at least one subject.");
       return;
     }
     activeUser.subjects = [...new Set(subjects)];
-    saveActiveUser();
+    if (!saveActiveUser()) return;
+    renderTaskSubjectOptions();
+    renderPlannerTasks();
   }
+  closeAccountEditors();
 }
 
 function deleteActiveAccount() {
   if (!activeUser) return;
   const username = activeUser.username;
+  const identity = activeUser.email || username;
   try {
     localStorage.removeItem(accountStorageKey(username));
     localStorage.removeItem(emotionStateKey(username));
+    localStorage.removeItem(journalEntriesKey(activeUser));
+    localStorage.removeItem(`${personalRoutineStorageKey}:${identity.toLowerCase()}`);
+    localStorage.removeItem(`${personalRoutineStorageKey}:${identity.toLowerCase()}:streak`);
+    localStorage.removeItem(`${personalRoutineStorageKey}:${identity.toLowerCase()}:garden`);
+    localStorage.removeItem(orbitTasksStorageKey);
     sessionStorage.removeItem("isLoggedIn");
     sessionStorage.removeItem("currentUsername");
   } catch (error) {
@@ -674,6 +863,9 @@ function deleteActiveAccount() {
   accountDeleteConfirmation.hidden = true;
   closeWorkspaceSettings();
   logOut();
+  resetSignup();
+  showAuthView("signup");
+  signupEmail.focus();
 }
 
 accountActionButtons.forEach((button) => {
@@ -684,8 +876,18 @@ accountActionButtons.forEach((button) => {
       accountDeleteConfirm.focus();
       return;
     }
-    editAccountValue(button.dataset.accountAction);
+    openAccountEditor(button.dataset.accountAction);
   });
+});
+
+document.addEventListener("click", (event) => {
+  const saveButton = event.target.closest("[data-account-editor-save]");
+  if (saveButton) {
+    saveAccountEditor(saveButton.dataset.accountEditorSave);
+    return;
+  }
+  const cancelButton = event.target.closest("[data-account-editor-cancel]");
+  if (cancelButton) closeAccountEditors();
 });
 
 accountDeleteCancel.addEventListener("click", () => {
@@ -2387,6 +2589,8 @@ function renderJournalEntries(user = activeUser) {
     page.dataset.entryId = entry.id;
     const drawingStrokes = normalizeJournalDrawingStrokes(entry.drawingStrokes);
     const stickyNotes = normalizeJournalStickyNotes(entry.stickyNotes);
+    const images = normalizeJournalImages(entry.images);
+    const stickers = normalizeJournalStickers(entry.stickers);
     const alignmentStyle = (alignment) => ["left", "center", "right", "justify"].includes(alignment)
       ? ` style="text-align: ${alignment};"`
       : "";
@@ -2399,6 +2603,8 @@ function renderJournalEntries(user = activeUser) {
     page.innerHTML = `
       <canvas class="journal-page__drawing" data-journal-page-drawing aria-hidden="true"></canvas>
       <div class="journal-page__sticky-notes" data-journal-page-sticky-notes aria-label="Saved sticky notes"></div>
+      <div class="journal-page__images" data-journal-page-images aria-label="Saved images"></div>
+      <div class="journal-page__stickers" data-journal-page-stickers aria-label="Saved stickers"></div>
       <button class="journal-entry-edit" type="button" data-edit-journal-entry="${escapeJournalText(entry.id)}" aria-label="Edit journal entry">
         <span aria-hidden="true"></span>
       </button>
@@ -2422,6 +2628,12 @@ function renderJournalEntries(user = activeUser) {
     const stickyNotesContainer = page.querySelector("[data-journal-page-sticky-notes]");
     journalPreviewStickyNotes.set(stickyNotesContainer, stickyNotes);
     renderJournalStickyNotePreviews(stickyNotesContainer, stickyNotes);
+    const imagesContainer = page.querySelector("[data-journal-page-images]");
+    journalPreviewImages.set(imagesContainer, images);
+    renderJournalImagePreviews(imagesContainer, images);
+    const stickersContainer = page.querySelector("[data-journal-page-stickers]");
+    journalPreviewStickers.set(stickersContainer, stickers);
+    renderJournalStickerPreviews(stickersContainer, stickers);
     sheet.append(page);
     newEntrySheet?.before(sheet);
   });
@@ -2591,6 +2803,105 @@ function renderJournalStickyNotePreviews(container, notes) {
   });
 }
 
+function normalizeJournalImages(images) {
+  if (!Array.isArray(images)) return [];
+  return images.flatMap((image) => {
+    if (!image || typeof image.dataUrl !== "string" || !/^data:image\/[a-z0-9.+-]+;base64,/i.test(image.dataUrl)) {
+      return [];
+    }
+    const toFiniteNumber = (value, fallback) => (
+      Number.isFinite(Number(value)) ? Number(value) : fallback
+    );
+    const widthRatio = clampJournalCanvasValue(toFiniteNumber(image.widthRatio, 0.25), 0.04, 0.95);
+    const heightRatio = clampJournalCanvasValue(toFiniteNumber(image.heightRatio, 0.25), 0.04, 0.95);
+    const naturalRatio = clampJournalCanvasValue(toFiniteNumber(image.naturalRatio, 1), 0.05, 20);
+    return [{
+      dataUrl: image.dataUrl,
+      x: clampJournalCanvasValue(toFiniteNumber(image.x, 0.04), 0, 1 - widthRatio),
+      y: clampJournalCanvasValue(toFiniteNumber(image.y, 0.08), 0, 1 - heightRatio),
+      widthRatio,
+      heightRatio,
+      naturalRatio,
+      rotation: clampJournalCanvasValue(toFiniteNumber(image.rotation, 0), -3600, 3600),
+      left: Math.max(0, toFiniteNumber(image.left, 0)),
+      top: Math.max(0, toFiniteNumber(image.top, 0)),
+      width: Math.max(1, toFiniteNumber(image.width, 240)),
+      height: Math.max(1, toFiniteNumber(image.height, 180)),
+      canvasWidth: Math.max(1, toFiniteNumber(image.canvasWidth, 1)),
+      canvasHeight: Math.max(1, toFiniteNumber(image.canvasHeight, 1)),
+    }];
+  });
+}
+
+function renderJournalImagePreviews(container, images) {
+  if (!container) return;
+  container.replaceChildren();
+  images.forEach((imageData) => {
+    const image = document.createElement("img");
+    image.className = "journal-image-item__image";
+    image.src = imageData.dataUrl;
+    image.alt = "Image added to journal";
+    const wrapper = document.createElement("div");
+    wrapper.className = "journal-image-item journal-image-item--preview";
+    wrapper.style.left = `${imageData.x * 100}%`;
+    wrapper.style.top = `${imageData.y * 100}%`;
+    wrapper.style.width = `${imageData.widthRatio * 100}%`;
+    wrapper.style.height = `${imageData.heightRatio * 100}%`;
+    wrapper.style.transform = `rotate(${imageData.rotation}deg)`;
+    wrapper.append(image);
+    container.append(wrapper);
+  });
+}
+
+function normalizeJournalStickers(stickers) {
+  if (!Array.isArray(stickers)) return [];
+  return stickers.flatMap((sticker) => {
+    if (!sticker || !stickerAssets.includes(sticker.src)) return [];
+    const toFiniteNumber = (value, fallback) => (
+      Number.isFinite(Number(value)) ? Number(value) : fallback
+    );
+    const widthRatio = clampJournalCanvasValue(toFiniteNumber(sticker.widthRatio, 0.18), 0.04, 0.95);
+    const heightRatio = clampJournalCanvasValue(toFiniteNumber(sticker.heightRatio, 0.18), 0.04, 0.95);
+    const naturalRatio = clampJournalCanvasValue(toFiniteNumber(sticker.naturalRatio, 1), 0.05, 20);
+    return [{
+      src: sticker.src,
+      x: clampJournalCanvasValue(toFiniteNumber(sticker.x, 0.05), 0, 1 - widthRatio),
+      y: clampJournalCanvasValue(toFiniteNumber(sticker.y, 0.08), 0, 1 - heightRatio),
+      widthRatio,
+      heightRatio,
+      naturalRatio,
+      rotation: clampJournalCanvasValue(toFiniteNumber(sticker.rotation, 0), -3600, 3600),
+      left: Math.max(0, toFiniteNumber(sticker.left, 0)),
+      top: Math.max(0, toFiniteNumber(sticker.top, 0)),
+      width: Math.max(1, toFiniteNumber(sticker.width, 180)),
+      height: Math.max(1, toFiniteNumber(sticker.height, 180)),
+      canvasWidth: Math.max(1, toFiniteNumber(sticker.canvasWidth, 1)),
+      canvasHeight: Math.max(1, toFiniteNumber(sticker.canvasHeight, 1)),
+    }];
+  });
+}
+
+function renderJournalStickerPreviews(container, stickers) {
+  if (!container) return;
+  container.replaceChildren();
+  stickers.forEach((sticker) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "journal-image-item journal-image-item--preview journal-sticker-item--preview";
+    wrapper.style.left = `${sticker.x * 100}%`;
+    wrapper.style.top = `${sticker.y * 100}%`;
+    wrapper.style.width = `${sticker.widthRatio * 100}%`;
+    wrapper.style.height = `${sticker.heightRatio * 100}%`;
+    wrapper.style.transform = `rotate(${sticker.rotation}deg)`;
+    const image = document.createElement("img");
+    image.className = "journal-image-item__image";
+    image.src = sticker.src;
+    image.alt = "Sticker added to journal";
+    image.decoding = "async";
+    wrapper.append(image);
+    container.append(wrapper);
+  });
+}
+
 function resizeJournalDrawingLayer(canvas, strokes) {
   if (!canvas) return;
   const bounds = canvas.getBoundingClientRect();
@@ -2630,6 +2941,26 @@ function resizeJournalDrawingPreviews() {
       note.style.height = `${noteData.height * bounds.height}px`;
       note.style.fontSize = `${Math.max(8, noteData.fontScale * bounds.width)}px`;
     });
+  });
+  journalPages?.querySelectorAll("[data-journal-page-images]").forEach((container) => {
+    resizeJournalVisualPreviews(container, journalPreviewImages.get(container) || []);
+  });
+  journalPages?.querySelectorAll("[data-journal-page-stickers]").forEach((container) => {
+    resizeJournalVisualPreviews(container, journalPreviewStickers.get(container) || []);
+  });
+}
+
+function resizeJournalVisualPreviews(container, visuals) {
+  const bounds = container.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+  visuals.forEach((visual, index) => {
+    const wrapper = container.children[index];
+    if (!wrapper) return;
+    wrapper.style.left = `${visual.x * bounds.width}px`;
+    wrapper.style.top = `${visual.y * bounds.height}px`;
+    const width = visual.widthRatio * bounds.width;
+    wrapper.style.width = `${width}px`;
+    wrapper.style.height = `${width / visual.naturalRatio}px`;
   });
 }
 
@@ -2897,6 +3228,199 @@ function serializeJournalStickyNotes() {
   }));
 }
 
+function spawnJournalImage(dataUrl, naturalWidth, naturalHeight, imageData = null, visualKind = "image") {
+  if (!journalTypingArea || !naturalWidth || !naturalHeight) return;
+  const areaWidth = Math.max(1, journalTypingArea.clientWidth);
+  const areaHeight = Math.max(1, journalTypingArea.clientHeight);
+  const naturalRatio = naturalWidth / naturalHeight;
+  const initialWidth = Math.min(naturalWidth, 360, areaWidth * 0.5, areaHeight * 0.5 * naturalRatio);
+  const width = imageData
+    ? Math.max(48, imageData.width > 1 ? imageData.width : imageData.widthRatio * areaWidth)
+    : Math.max(48, initialWidth);
+  const height = width / naturalRatio;
+  const image = document.createElement("img");
+  image.className = "journal-image-item__image";
+  image.src = dataUrl;
+  image.alt = visualKind === "sticker" ? "Journal sticker" : "Journal image";
+  image.addEventListener("error", () => {
+    console.error("Unable to display an image in this journal entry.");
+  }, { once: true });
+  const item = document.createElement("div");
+  item.className = "journal-image-item";
+  item.dataset[visualKind === "sticker" ? "journalSticker" : "journalImage"] = "";
+  item.dataset.rotation = String(imageData?.rotation || 0);
+  item.tabIndex = 0;
+  item.setAttribute("role", "group");
+  item.setAttribute("aria-label", visualKind === "sticker" ? "Journal sticker" : "Uploaded journal image");
+  item.style.width = `${width}px`;
+  item.style.height = `${height}px`;
+  item.style.left = `${imageData
+    ? clampJournalCanvasValue(
+      imageData.left > 0 ? imageData.left : imageData.x * areaWidth,
+      0,
+      Math.max(0, areaWidth - width),
+    )
+    : Math.min(42 + (journalTypingArea.querySelectorAll("[data-journal-image]").length % 6) * 22, Math.max(0, areaWidth - width))}px`;
+  item.style.top = `${imageData
+    ? clampJournalCanvasValue(
+      imageData.top > 0 ? imageData.top : imageData.y * areaHeight,
+      0,
+      Math.max(0, areaHeight - height),
+    )
+    : Math.min(90 + (journalTypingArea.querySelectorAll("[data-journal-image]").length % 6) * 22, Math.max(0, areaHeight - height))}px`;
+  if (imageData?.rotation) item.style.transform = `rotate(${imageData.rotation}deg)`;
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "journal-image-item__control journal-image-item__delete";
+  deleteButton.type = "button";
+  deleteButton.dataset.journalImageAction = "delete";
+  deleteButton.setAttribute("aria-label", "Delete image");
+  deleteButton.textContent = "×";
+
+  const rotateButton = document.createElement("button");
+  rotateButton.className = "journal-image-item__control journal-image-item__rotate";
+  rotateButton.type = "button";
+  rotateButton.dataset.journalImageAction = "rotate";
+  rotateButton.setAttribute("aria-label", "Rotate image");
+  rotateButton.textContent = "⟳";
+
+  const resizeButton = document.createElement("button");
+  resizeButton.className = "journal-image-item__control journal-image-item__resize";
+  resizeButton.type = "button";
+  resizeButton.dataset.journalImageAction = "resize";
+  resizeButton.setAttribute("aria-label", "Resize image");
+  resizeButton.textContent = "↘";
+
+  deleteButton.addEventListener("click", () => {
+    item.remove();
+    isCanvasDirty = true;
+  });
+  item.addEventListener("pointerdown", (event) => {
+    const action = event.target.closest("[data-journal-image-action]")?.dataset.journalImageAction;
+    if (action === "delete") return;
+    event.stopPropagation();
+    item.classList.add("is-selected");
+    journalTypingArea.querySelectorAll("[data-journal-image].is-selected, [data-journal-sticker].is-selected").forEach((otherItem) => {
+      if (otherItem !== item) otherItem.classList.remove("is-selected");
+    });
+    if (action) {
+      event.preventDefault();
+      const rect = item.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      activeStickyNoteInteraction = {
+        type: `image-${action}`,
+        note: item,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startLeft: Number.parseFloat(item.style.left) || 0,
+        startTop: Number.parseFloat(item.style.top) || 0,
+        startWidth: item.offsetWidth,
+        startHeight: item.offsetHeight,
+        centerX,
+        centerY,
+        startPointerAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX),
+        startRotation: Number(item.dataset.rotation) || 0,
+      };
+      item.setPointerCapture(event.pointerId);
+      return;
+    }
+    event.preventDefault();
+    activeStickyNoteInteraction = {
+      type: "image-drag",
+      note: item,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: Number.parseFloat(item.style.left) || 0,
+      startTop: Number.parseFloat(item.style.top) || 0,
+    };
+    item.setPointerCapture(event.pointerId);
+  });
+
+  item.append(image, deleteButton, rotateButton, resizeButton);
+  journalTypingArea.append(item);
+  item.focus();
+  isCanvasDirty = true;
+}
+
+function readJournalImageFile(file) {
+  if (file.type && !file.type.startsWith("image/")) {
+    window.alert("Please choose an image file.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    if (typeof reader.result !== "string" || !/^data:image\/[a-z0-9.+-]+;base64,/i.test(reader.result)) {
+      window.alert("This image could not be loaded.");
+      return;
+    }
+    const image = new Image();
+    image.addEventListener("load", () => {
+      spawnJournalImage(reader.result, image.naturalWidth, image.naturalHeight);
+    }, { once: true });
+    image.addEventListener("error", () => {
+      window.alert("This image could not be decoded.");
+    }, { once: true });
+    image.src = reader.result;
+  }, { once: true });
+  reader.addEventListener("error", () => {
+    window.alert("This image could not be read from your device.");
+  }, { once: true });
+  reader.readAsDataURL(file);
+}
+
+function serializeJournalImages() {
+  return serializeJournalVisuals("[data-journal-image]");
+}
+
+function serializeJournalStickers() {
+  return serializeJournalVisuals("[data-journal-sticker]").map(({ dataUrl, ...sticker }) => ({
+    ...sticker,
+    src: dataUrl,
+  }));
+}
+
+function serializeJournalVisuals(selector) {
+  if (!journalTypingArea) return [];
+  const bounds = journalTypingArea.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return [];
+  return [...journalTypingArea.querySelectorAll(selector)].map((item) => {
+    const left = Number.parseFloat(item.style.left) || 0;
+    const top = Number.parseFloat(item.style.top) || 0;
+    const width = Number.parseFloat(item.style.width) || item.offsetWidth;
+    const height = Number.parseFloat(item.style.height) || item.offsetHeight;
+    return {
+      dataUrl: item.querySelector("img")?.getAttribute("src") || "",
+      left,
+      top,
+      width,
+      height,
+      canvasWidth: bounds.width,
+      canvasHeight: bounds.height,
+      x: left / bounds.width,
+      y: top / bounds.height,
+      widthRatio: width / bounds.width,
+      heightRatio: height / bounds.height,
+      naturalRatio: width / height,
+      rotation: Number(item.dataset.rotation) || 0,
+    };
+  });
+}
+
+function restoreJournalImages(images) {
+  normalizeJournalImages(images).forEach((imageData) => {
+    spawnJournalImage(imageData.dataUrl, imageData.naturalRatio, 1, imageData);
+  });
+}
+
+function restoreJournalStickers(stickers) {
+  normalizeJournalStickers(stickers).forEach((sticker) => {
+    spawnJournalSticker(sticker.src, sticker);
+  });
+}
+
 function moveJournalStickyNote(event) {
   const interaction = activeStickyNoteInteraction;
   if (!interaction || interaction.pointerId !== event.pointerId) return;
@@ -2908,6 +3432,23 @@ function moveJournalStickyNote(event) {
     const maxTop = Math.max(0, journalTypingArea.clientHeight - note.offsetHeight);
     note.style.left = `${clampJournalCanvasValue(interaction.startLeft + dx, 0, maxLeft)}px`;
     note.style.top = `${clampJournalCanvasValue(interaction.startTop + dy, 0, maxTop)}px`;
+  } else if (interaction.type === "image-drag") {
+    const maxLeft = Math.max(0, journalTypingArea.clientWidth - note.offsetWidth);
+    const maxTop = Math.max(0, journalTypingArea.clientHeight - note.offsetHeight);
+    note.style.left = `${clampJournalCanvasValue(interaction.startLeft + dx, 0, maxLeft)}px`;
+    note.style.top = `${clampJournalCanvasValue(interaction.startTop + dy, 0, maxTop)}px`;
+  } else if (interaction.type === "image-resize") {
+    const maxScale = Math.max(0.1, Math.min(
+      (journalTypingArea.clientWidth - interaction.startLeft) / interaction.startWidth,
+      (journalTypingArea.clientHeight - interaction.startTop) / interaction.startHeight,
+    ));
+    const scale = clampJournalCanvasValue(
+      Math.max(1 + dx / interaction.startWidth, 1 + dy / interaction.startHeight),
+      48 / interaction.startWidth,
+      maxScale,
+    );
+    note.style.width = `${interaction.startWidth * scale}px`;
+    note.style.height = `${interaction.startHeight * scale}px`;
   } else if (interaction.type === "resize") {
     const maxWidth = Math.max(132, journalTypingArea.clientWidth - interaction.startLeft);
     const maxHeight = Math.max(110, journalTypingArea.clientHeight - interaction.startTop);
@@ -2920,7 +3461,7 @@ function moveJournalStickyNote(event) {
     note.style.width = `${interaction.startWidth * scale}px`;
     note.style.height = `${interaction.startHeight * scale}px`;
     note.style.fontSize = `${interaction.startFontSize * scale}px`;
-  } else if (interaction.type === "rotate") {
+  } else if (interaction.type === "rotate" || interaction.type === "image-rotate") {
     const pointerAngle = Math.atan2(event.clientY - interaction.centerY, event.clientX - interaction.centerX);
     const rotation = interaction.startRotation + (pointerAngle - interaction.startPointerAngle) * (180 / Math.PI);
     note.dataset.rotation = String(rotation);
@@ -2943,6 +3484,8 @@ function clearJournalCanvasTools() {
   featureExpansionDrawer?.setAttribute("aria-hidden", "true");
   journalEntryTools.forEach((tool) => tool.setAttribute("aria-pressed", "false"));
   journalTypingArea?.querySelectorAll(".journal-sticky-note").forEach((note) => note.remove());
+  journalTypingArea?.querySelectorAll("[data-journal-image]").forEach((image) => image.remove());
+  journalTypingArea?.querySelectorAll("[data-journal-sticker]").forEach((sticker) => sticker.remove());
   journalDrawingStrokes = [];
   currentJournalStroke = null;
   activeStickyNoteInteraction = null;
@@ -2973,10 +3516,10 @@ document.addEventListener("pointermove", moveJournalStickyNote);
 document.addEventListener("pointerup", endJournalStickyNoteInteraction);
 document.addEventListener("pointercancel", endJournalStickyNoteInteraction);
 document.addEventListener("pointerdown", (event) => {
-  if (event.target.closest(".journal-sticky-note")) return;
-  journalTypingArea?.querySelectorAll(".journal-sticky-note.is-selected").forEach((note) => {
-    note.classList.remove("is-selected");
-  });
+  if (event.target.closest(".journal-sticky-note, [data-journal-image], [data-journal-sticker]")) return;
+  journalTypingArea?.querySelectorAll(
+    ".journal-sticky-note.is-selected, [data-journal-image].is-selected, [data-journal-sticker].is-selected",
+  ).forEach((item) => item.classList.remove("is-selected"));
 });
 
 function resetJournalEntryCanvas(entry = null) {
@@ -3014,6 +3557,8 @@ function editJournalEntry(entryId) {
   resetJournalEntryCanvas(entry);
   setWorkspacePage("journal-entry");
   restoreJournalStickyNotes(entry.stickyNotes);
+  restoreJournalImages(entry.images);
+  restoreJournalStickers(entry.stickers);
   journalEntryTitle?.focus();
 }
 
@@ -3055,6 +3600,8 @@ function saveJournalEntry() {
     bodyAlignment: getAlignment(bodyField),
     drawingStrokes: normalizeJournalDrawingStrokes(journalDrawingStrokes),
     stickyNotes: normalizeJournalStickyNotes(serializeJournalStickyNotes()),
+    images: normalizeJournalImages(serializeJournalImages()),
+    stickers: normalizeJournalStickers(serializeJournalStickers()),
   };
   const entries = readJournalEntries();
   const existingIndex = entries.findIndex((savedEntry) => savedEntry.id === entry.id);
@@ -3108,6 +3655,100 @@ function restoreJournalEditorSelection() {
   selection.removeAllRanges();
   selection.addRange(savedJournalRange);
   return field;
+}
+
+function renderJournalPrompts() {
+  if (!featureExpansionDrawerContent) return;
+  const heading = document.createElement("h2");
+  heading.className = "journal-prompt-list__heading";
+  heading.textContent = "Choose a prompt";
+  const list = document.createElement("div");
+  list.className = "journal-prompt-list";
+  list.setAttribute("role", "list");
+  journalPromptTexts.forEach((prompt, index) => {
+    const item = document.createElement("div");
+    item.setAttribute("role", "listitem");
+    const button = document.createElement("button");
+    button.className = "journal-prompt-card";
+    button.type = "button";
+    button.dataset.journalPromptIndex = String(index);
+    button.textContent = prompt;
+    item.append(button);
+    list.append(item);
+  });
+  featureExpansionDrawerContent.replaceChildren(heading, list);
+}
+
+function renderJournalStickerPicker() {
+  if (!featureExpansionDrawerContent) return;
+  const heading = document.createElement("h2");
+  heading.className = "journal-prompt-list__heading";
+  heading.textContent = "Choose a sticker";
+  const grid = document.createElement("div");
+  grid.className = "journal-sticker-picker";
+  stickerAssets.forEach((src, index) => {
+    const button = document.createElement("button");
+    button.className = "journal-sticker-picker__item";
+    button.type = "button";
+    button.dataset.journalStickerIndex = String(index);
+    button.setAttribute("aria-label", `Add sticker ${index + 1}`);
+    const image = document.createElement("img");
+    image.src = src;
+    image.alt = "";
+    image.loading = "lazy";
+    image.decoding = "async";
+    button.append(image);
+    grid.append(button);
+  });
+  featureExpansionDrawerContent.replaceChildren(heading, grid);
+}
+
+function spawnJournalSticker(src, stickerData = null) {
+  if (!stickerAssets.includes(src)) return;
+  const image = new Image();
+  image.addEventListener("load", () => {
+    spawnJournalImage(src, image.naturalWidth, image.naturalHeight, stickerData, "sticker");
+  }, { once: true });
+  image.addEventListener("error", () => {
+    console.error(`Unable to load journal sticker: ${src}`);
+  }, { once: true });
+  image.src = src;
+}
+
+function insertJournalPrompt(prompt) {
+  const bodyField = journalEntryFields.find((field) => field.dataset.entryField === "body");
+  let range = savedJournalRange?.cloneRange() || null;
+  let field = range && getJournalFieldForNode(range.commonAncestorContainer);
+
+  if (!field) {
+    field = bodyField || journalEntryFields[journalEntryFields.length - 1];
+    if (!field) return;
+    field.focus({ preventScroll: true });
+    range = document.createRange();
+    range.selectNodeContents(field);
+    range.collapse(false);
+  } else {
+    field.focus({ preventScroll: true });
+  }
+
+  const selection = window.getSelection();
+  if (!selection || !range) return;
+  selection.removeAllRanges();
+  selection.addRange(range);
+  range = selection.getRangeAt(0);
+  if (!range.collapsed) range.deleteContents();
+
+  const promptNode = document.createTextNode(prompt);
+  range.insertNode(promptNode);
+  range.setStartAfter(promptNode);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  savedJournalRange = range.cloneRange();
+  journalFieldTextSnapshots.set(field, field.textContent);
+  isCanvasDirty = true;
+  showJournalFormatToolbar();
+  updateJournalFormatToolbar({ preserveTextStyle: true });
 }
 
 function getJournalRangeOffsets(field, range) {
@@ -3717,6 +4358,8 @@ journalEntryFields.forEach((field) => {
     saveJournalEditorSelection();
     showJournalFormatToolbar();
   });
+  field.addEventListener("click", saveJournalEditorSelection);
+  field.addEventListener("blur", saveJournalEditorSelection);
   field.addEventListener("keyup", () => {
     const range = saveJournalEditorSelection();
     if (range?.collapsed) reapplyPendingJournalInputStyle();
@@ -3879,6 +4522,12 @@ function collapseJournalPenDrawer() {
 function selectJournalFeature(tool) {
   if (!featureExpansionDrawer) return;
   const featureName = tool.dataset.featureTool || "";
+  if (featureName === "image") {
+    collapseFeatureDrawer();
+    collapseJournalPenDrawer();
+    journalImageUpload?.click();
+    return;
+  }
   if (featureName === "note") {
     collapseFeatureDrawer();
     collapseJournalPenDrawer();
@@ -3902,6 +4551,8 @@ function selectJournalFeature(tool) {
     collapseFeatureDrawer();
     return;
   }
+  if (featureName === "prompts") renderJournalPrompts();
+  if (featureName === "stickers") renderJournalStickerPicker();
   activeJournalFeature = featureName;
   featureExpansionDrawer.classList.remove("drawer-collapsed");
   featureExpansionDrawer.setAttribute("aria-hidden", "false");
@@ -3915,6 +4566,29 @@ journalEntryTools.forEach((tool) => {
   tool.addEventListener("click", () => {
     selectJournalFeature(tool);
   });
+});
+
+featureExpansionDrawerContent?.addEventListener("mousedown", (event) => {
+  if (event.target.closest("[data-journal-prompt-index], [data-journal-sticker-index]")) event.preventDefault();
+});
+
+featureExpansionDrawerContent?.addEventListener("click", (event) => {
+  const stickerButton = event.target.closest("[data-journal-sticker-index]");
+  const stickerIndex = Number(stickerButton?.dataset.journalStickerIndex);
+  if (Number.isInteger(stickerIndex) && stickerAssets[stickerIndex]) {
+    spawnJournalSticker(stickerAssets[stickerIndex]);
+    return;
+  }
+  const promptButton = event.target.closest("[data-journal-prompt-index]");
+  const promptIndex = Number(promptButton?.dataset.journalPromptIndex);
+  if (!Number.isInteger(promptIndex) || !journalPromptTexts[promptIndex]) return;
+  insertJournalPrompt(journalPromptTexts[promptIndex]);
+});
+
+journalImageUpload?.addEventListener("change", () => {
+  const [file] = journalImageUpload.files || [];
+  journalImageUpload.value = "";
+  if (file) readJournalImageFile(file);
 });
 
 journalDrawToolButtons.forEach((button) => {

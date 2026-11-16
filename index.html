@@ -267,18 +267,22 @@
                 <div class="account-status-row">
                   <div><strong><img src="assets/settings-icon-username.svg" alt="" aria-hidden="true">Edit username</strong><small>Current username: <span id="account-username-value">Not set</span></small></div>
                   <button class="account-action-button" type="button" data-account-action="username">Edit</button>
+                  <div class="account-inline-editor" data-account-editor="username" hidden></div>
                 </div>
                 <div class="account-status-row">
                   <div><strong><img src="assets/settings-icon-password.svg" alt="" aria-hidden="true">Change password</strong><small>Current password: <span id="account-password-value">Not set</span></small></div>
                   <button class="account-action-button" type="button" data-account-action="password">Change</button>
+                  <div class="account-inline-editor" data-account-editor="password" hidden></div>
                 </div>
                 <div class="account-status-row">
                   <div><strong><img src="assets/settings-icon-grade.svg" alt="" aria-hidden="true">Change grade</strong><small>Current grade: <span id="account-grade-value">Not set</span></small></div>
                   <button class="account-action-button" type="button" data-account-action="grade">Change</button>
+                  <div class="account-inline-editor" data-account-editor="grade" hidden></div>
                 </div>
                 <div class="account-status-row">
                   <div><strong><img src="assets/settings-icon-subjects.svg" alt="" aria-hidden="true">Change subjects</strong><small>Current subjects: <span id="account-subjects-value">No subjects selected</span></small></div>
                   <button class="account-action-button" type="button" data-account-action="subjects">Change</button>
+                  <div class="account-inline-editor" data-account-editor="subjects" hidden></div>
                 </div>
                 <div class="account-status-row account-status-row--danger">
                   <div><strong><img src="assets/settings-icon-delete.svg" alt="" aria-hidden="true">Delete account</strong><small>This permanently removes your local profile and account data.</small></div>
@@ -495,6 +499,10 @@
                     class="breathing-widget__gif-art"
                     src="assets/breathing-unwind.gif"
                     alt="Meditating rabbit breathing animation"
+                    data-mint-src="assets/breathing-unwind.gif"
+                    data-dark-src="assets/breathing-dark-academia.webp"
+                    data-retro-src="assets/breathing-retro.webp"
+                    data-tulip-src="assets/breathing-tulip.webp"
                   >
                   <p>Credits: GIPHY</p>
                 </div>
@@ -579,6 +587,7 @@
           </div>
           <button class="journal-entry-canvas__save" id="journal-entry-save" type="button">✓ SAVE</button>
         </header>
+        <input id="journal-image-upload" type="file" accept="image/*" hidden aria-label="Upload an image to your journal">
         <div class="journal-entry-canvas__body">
           <aside class="journal-entry-canvas__tools" aria-label="Entry tools">
             <button class="journal-entry-tool" type="button" data-feature-tool="stickers" aria-pressed="false">
@@ -771,6 +780,10 @@
                           class="breathing-widget__gif-art"
                           src="assets/breathing-unwind.gif"
                           alt="Meditating rabbit breathing animation"
+                          data-mint-src="assets/breathing-unwind.gif"
+                          data-dark-src="assets/breathing-dark-academia.webp"
+                          data-retro-src="assets/breathing-retro.webp"
+                          data-tulip-src="assets/breathing-tulip.webp"
                         >
                         <p>Credits: GIPHY</p>
                       </div>
